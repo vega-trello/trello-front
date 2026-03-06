@@ -14,36 +14,41 @@ import Preferences from "./components/Preferences.tsx";
 import API from "./api/api.ts";
 import RequireAuth from "./middleware/requireAuth.tsx";
 
-const router = createBrowserRouter([
-  {
-    element: (
-      <StrictMode>
-        <Provider>
-          <App />
-        </Provider>
-      </StrictMode>
-    ),
-    children: [
-      { index: true, Component: RootRedirect },
-      { path: "/login", Component: Login },
-      { path: "/register", Component: Register },
-      {
-        element: <RequireAuth />,
-        children: [
-          { path: "/preferences", Component: Preferences },
-          { path: "/projects", Component: Projects },
-          {
-            path: "/project/:uuid",
-            Component: Project,
-            loader: async ({ params }) => {
-              return await API.GetProject(params["uuid"] as string);
+const router = createBrowserRouter(
+  [
+    {
+      element: (
+        <StrictMode>
+          <Provider>
+            <App />
+          </Provider>
+        </StrictMode>
+      ),
+      children: [
+        { index: true, Component: RootRedirect },
+        { path: "/login", Component: Login },
+        { path: "/register", Component: Register },
+        {
+          element: <RequireAuth />,
+          children: [
+            { path: "/preferences", Component: Preferences },
+            { path: "/projects", Component: Projects },
+            {
+              path: "/project/:uuid",
+              Component: Project,
+              loader: async ({ params }) => {
+                return await API.GetProject(params["uuid"] as string);
+              },
             },
-          },
-        ],
-      },
-    ],
+          ],
+        },
+      ],
+    },
+  ],
+  {
+    basename: import.meta.env.BASE_URL,
   },
-]);
+);
 
 const root = document.getElementById("root")!;
 
