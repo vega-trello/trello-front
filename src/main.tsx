@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./components/App.tsx";
 import { RouterProvider } from "react-router/dom";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, createHashRouter } from "react-router";
 import { StrictMode } from "react";
 import { Provider } from "./components/ui/provider.tsx";
 import Projects from "./components/Projects.tsx";
@@ -14,7 +14,10 @@ import Preferences from "./components/Preferences.tsx";
 import API from "./api/api.ts";
 import RequireAuth from "./middleware/requireAuth.tsx";
 
-const router = createBrowserRouter(
+const createRouter =
+  import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
+
+const router = createRouter(
   [
     {
       element: (
