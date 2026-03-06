@@ -10,7 +10,7 @@ import {
   Table,
   Text,
 } from "@chakra-ui/react";
-import "./Library.css";
+import "./Projects.css";
 import { useEffect, useRef } from "react";
 import { NavLink } from "react-router";
 
@@ -57,7 +57,7 @@ function AddProjectButton() {
   );
 }
 
-function Library() {
+function Projects() {
   useEffect(() => {
     document.title = "Trega | Проекты";
   });
@@ -75,7 +75,7 @@ function Library() {
     "180ebb2e-703b-46d9-82fb-cd82f89f86ac",
   ];
   return (
-    <div id="library">
+    <div id="projects">
       <Heading size="2xl" margin="4">
         Проекты
       </Heading>
@@ -90,17 +90,17 @@ function Library() {
         <Table.Body>
           <For each={projectUUIDs}>
             {(uuid) => (
-              <Table.Row key={uuid}>
-                <Table.Cell>
-                  <NavLink to={"/project/" + uuid}>
+              <NavLink to={"/project/" + uuid} style={{ display: "contents" }} key={uuid}>
+                <Table.Row className="row">
+                  <Table.Cell>
                     <Text alignItems="center" display="flex" gap="2">
                       {uuid}
                     </Text>
-                  </NavLink>
-                </Table.Cell>
-                <Table.Cell>01.01.2001</Table.Cell>
-                <Table.Cell>10.10.2010</Table.Cell>
-              </Table.Row>
+                  </Table.Cell>
+                  <Table.Cell>01.01.2001</Table.Cell>
+                  <Table.Cell>10.10.2010</Table.Cell>
+                </Table.Row>
+              </NavLink>
             )}
           </For>
         </Table.Body>
@@ -110,4 +110,4 @@ function Library() {
   );
 }
 
-export default Library;
+export default Projects;

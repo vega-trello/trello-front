@@ -1,63 +1,41 @@
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 import "./Header.css";
-import {
-  Box,
-  Button,
-  Heading,
-  Icon,
-  Menu,
-  Portal,
-  Spacer,
-  Switch,
-  Text,
-} from "@chakra-ui/react";
+import { Box, Button, Heading, Menu, Portal, Text } from "@chakra-ui/react";
 import { MdAccountCircle } from "react-icons/md";
-import { useColorMode } from "./ui/color-mode";
-import { FaMoon, FaSun } from "react-icons/fa";
+import { useCallback } from "react";
+import API from "../api/api";
+import ThemeSwitcher from "./ThemeSwitcher";
+import useUser from "../hooks/useUser";
 
-type HeaderProps = {
-  userUUID: string;
-};
+function User() {
+  const user = useUser();
+  const navigate = useNavigate();
 
-function User({ userUUID }: { userUUID: string }) {
-  const { colorMode, setColorMode } = useColorMode();
+  const quit = useCallback(async () => {
+    await API.Logout();
+    navigate("/login");
+  }, [navigate]);
+
+  if (user === undefined || user === null) return <></>;
 
   return (
     <Menu.Root positioning={{ placement: "bottom-end" }}>
       <Menu.Trigger asChild>
         <Button variant="plain">
-          <Text>{userUUID}</Text>
+          <Text>{user.username}</Text>
           <MdAccountCircle />
         </Button>
       </Menu.Trigger>
       <Portal>
         <Menu.Positioner>
           <Menu.Content>
-            <Menu.Item value="colorTheme" closeOnSelect={false}>
-              <Switch.Root
-                colorPalette="blue"
-                checked={colorMode === "dark"}
-                onCheckedChange={({ checked }) =>
-                  setColorMode(checked ? "dark" : "light")
-                }
-                flexGrow={1}
-              >
-                <Switch.HiddenInput />
-                <Switch.Label>Тема</Switch.Label>
-                <Spacer />
-                <Switch.Control>
-                  <Switch.Thumb />
-                  <Switch.Indicator fallback={<Icon as={FaSun} />}>
-                    <Icon as={FaMoon} />
-                  </Switch.Indicator>
-                </Switch.Control>
-              </Switch.Root>
-            </Menu.Item>
             <Menu.Item value="preferences">
               <NavLink to="/preferences">Настройки</NavLink>
             </Menu.Item>
             <Menu.Separator />
-            <Menu.Item value="quit">Выйти</Menu.Item>
+            <Menu.Item value="quit" onSelect={quit}>
+              Выйти
+            </Menu.Item>
           </Menu.Content>
         </Menu.Positioner>
       </Portal>
@@ -65,9 +43,9 @@ function User({ userUUID }: { userUUID: string }) {
   );
 }
 
-function Header({ userUUID }: HeaderProps) {
+function Header() {
   return (
-    <Box as="header" id="main-header" bg="Background" shadow='xs'>
+    <Box as="header" id="main-header" bg="Background" shadow="xs">
       <div className="inner">
         <div className="left">
           <NavLink to="/" end style={{ color: "inherit" }}>
@@ -75,7 +53,8 @@ function Header({ userUUID }: HeaderProps) {
           </NavLink>
         </div>
         <div className="right">
-          <User userUUID={userUUID} />
+          <User />
+          <ThemeSwitcher />
         </div>
       </div>
     </Box>

@@ -5,12 +5,14 @@ import { RouterProvider } from "react-router/dom";
 import { createBrowserRouter } from "react-router";
 import { StrictMode } from "react";
 import { Provider } from "./components/ui/provider.tsx";
-import Library from "./components/Library.tsx";
+import Projects from "./components/Projects.tsx";
 import Project from "./components/project/Project.tsx";
 import Login from "./components/auth/Login.tsx";
 import Register from "./components/auth/Register.tsx";
 import RootRedirect from "./components/RootRedirect.tsx";
 import Preferences from "./components/Preferences.tsx";
+import API from "./api/api.ts";
+import RequireAuth from "./middleware/requireAuth.tsx";
 
 const router = createBrowserRouter([
   {
@@ -22,32 +24,22 @@ const router = createBrowserRouter([
       </StrictMode>
     ),
     children: [
+      { index: true, Component: RootRedirect },
+      { path: "/login", Component: Login },
+      { path: "/register", Component: Register },
       {
-        index: true,
-        Component: RootRedirect,
-      },
-      {
-        path: "/login",
-        Component: Login,
-      },
-      {
-        path: "/register",
-        Component: Register,
-      },
-      {
-        path: "/preferences",
-        Component: Preferences,
-      },
-      {
-        path: "/projects",
-        Component: Library,
-      },
-      {
-        path: "/project/:uuid",
-        loader: async () => {
-          return { res: await fetch("https://httpbin.org/delay/5") };
-        },
-        Component: Project,
+        element: <RequireAuth />,
+        children: [
+          { path: "/preferences", Component: Preferences },
+          { path: "/projects", Component: Projects },
+          {
+            path: "/project/:uuid",
+            Component: Project,
+            loader: async ({ params }) => {
+              return await API.GetProject(params["uuid"] as string);
+            },
+          },
+        ],
       },
     ],
   },
