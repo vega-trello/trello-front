@@ -17,36 +17,41 @@ import RequireAuth from "./middleware/requireAuth.tsx";
 const createRouter =
   import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
 
-const router = createRouter([
-  {
-    element: (
-      <StrictMode>
-        <Provider>
-          <App />
-        </Provider>
-      </StrictMode>
-    ),
-    children: [
-      { index: true, Component: RootRedirect },
-      { path: "/login", Component: Login },
-      { path: "/register", Component: Register },
-      {
-        element: <RequireAuth />,
-        children: [
-          { path: "/preferences", Component: Preferences },
-          { path: "/projects", Component: Projects },
-          {
-            path: "/project/:uuid",
-            Component: Project,
-            loader: async ({ params }) => {
-              return await API.GetProject(params["uuid"] as string);
+const router = createRouter(
+  [
+    {
+      element: (
+        <StrictMode>
+          <Provider>
+            <App />
+          </Provider>
+        </StrictMode>
+      ),
+      children: [
+        { index: true, Component: RootRedirect },
+        { path: "/login", Component: Login },
+        { path: "/register", Component: Register },
+        {
+          element: <RequireAuth />,
+          children: [
+            { path: "/preferences", Component: Preferences },
+            { path: "/projects", Component: Projects },
+            {
+              path: "/project/:uuid",
+              Component: Project,
+              loader: async ({ params }) => {
+                return await API.GetProject(params["uuid"] as string);
+              },
             },
-          },
-        ],
-      },
-    ],
+          ],
+        },
+      ],
+    },
+  ],
+  {
+    basename: import.meta.env.MODE === "gh-pages" ? "/trello-front/" : "/",
   },
-]);
+);
 
 const root = document.getElementById("root")!;
 
