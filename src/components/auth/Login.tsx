@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { NavLink, useNavigate } from "react-router";
 import API from "../../api/api";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { PasswordInput } from "../ui/password-input";
 
 function Login() {
@@ -17,12 +17,13 @@ function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const login = async () => {
+  const login = useCallback(async () => {
     const res = await API.Login(username, password);
+    console.log(res);
     if (res.ok) {
-      return navigate("/");
+      return navigate("/", { replace: true });
     }
-  };
+  }, [username, password, navigate]);
 
   return (
     <Center flexGrow="1">

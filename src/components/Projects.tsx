@@ -7,15 +7,32 @@ import {
   Input,
   Portal,
   Stack,
+  Stat,
   Table,
   Text,
+  Textarea,
 } from "@chakra-ui/react";
 import "./Projects.css";
-import { useEffect, useRef } from "react";
-import { NavLink } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { NavLink, useLoaderData } from "react-router";
+import API from "../api/api";
 
 function AddProjectButton() {
   const ref = useRef<HTMLInputElement | null>(null);
+  const [title, setTitle] = useState("");
+  const titleSyms = Array.from(title).length.toString();
+  const [desc, setDesc] = useState("");
+  const descSyms = Array.from(desc).length.toString();
+
+  const create = useCallback(() => {
+    API.CreateProject({
+      title,
+      description: desc,
+    }).then((res) => {
+      alert(`Created project, ${JSON.stringify(res)}`);
+    });
+  }, [title, desc]);
+
   return (
     <Dialog.Root
       initialFocusEl={() => ref.current}
@@ -38,16 +55,37 @@ function AddProjectButton() {
               <Stack gap="4">
                 <Field.Root>
                   <Field.Label>Название</Field.Label>
-                  <Input placeholder="Название" ref={ref} />
+                  <Input
+                    placeholder="Название"
+                    ref={ref}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                  <Stat.Root>
+                    <Stat.Label>{titleSyms} / 128</Stat.Label>
+                  </Stat.Root>
                 </Field.Root>
+                <Field.Root>
+                  <Field.Label>Описание</Field.Label>
+                  <Textarea
+                    placeholder="Описание"
+                    value={desc}
+                    onChange={(e) => setDesc(e.target.value)}
+                  />
+                  <Stat.Root>
+                    <Stat.Label>{descSyms} / 128</Stat.Label>
+                  </Stat.Root>
+              </Field.Root>
               </Stack>
             </Dialog.Body>
             <Dialog.Footer>
               <Dialog.ActionTrigger asChild>
                 <Button variant="ghost">Отменить</Button>
               </Dialog.ActionTrigger>
-              <Dialog.ActionTrigger>
-                <Button variant="solid">Создать</Button>
+              <Dialog.ActionTrigger asChild formAction={create}>
+                <Button variant="solid">
+                  Создать
+                </Button>
               </Dialog.ActionTrigger>
             </Dialog.Footer>
           </Dialog.Content>
@@ -58,22 +96,12 @@ function AddProjectButton() {
 }
 
 function Projects() {
+  const projects: Project[] | null = useLoaderData();
   useEffect(() => {
     document.title = "Trega | Проекты";
   });
 
-  const projectUUIDs = [
-    "c888e595-fae0-43ed-b04a-f5275b49903e",
-    "964e4e04-cf85-49c5-99b0-bd37834172d8",
-    "682e1c89-ce5a-40da-b8c5-21a346442762",
-    "996a70f5-e3b6-49a2-8e49-3715ff77ec2d",
-    "bf186d90-9fe6-45c9-9710-798f233070e5",
-    "384306dd-1451-452d-8922-43f2594e95f3",
-    "9d229ee8-3ba8-49bb-a0a2-bd0c76502cf5",
-    "3dc0c1eb-262d-4ae0-a4a5-06e94ccc2853",
-    "1c9da3c0-ce4f-408b-b8d0-19022ad3fe66",
-    "180ebb2e-703b-46d9-82fb-cd82f89f86ac",
-  ];
+  if (projects === null) return <Text>Error loading projects</Text>;
   return (
     <div id="projects">
       <Heading size="2xl" margin="4">
@@ -88,13 +116,17 @@ function Projects() {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          <For each={projectUUIDs}>
-            {(uuid) => (
-              <NavLink to={"/project/" + uuid} style={{ display: "contents" }} key={uuid}>
+          <For each={projects}>
+            {(project) => (
+              <NavLink
+                to={"/project/" + project.uuid}
+                style={{ display: "contents" }}
+                key={project.uuid}
+              >
                 <Table.Row className="row">
                   <Table.Cell>
                     <Text alignItems="center" display="flex" gap="2">
-                      {uuid}
+                      {project.title}
                     </Text>
                   </Table.Cell>
                   <Table.Cell>01.01.2001</Table.Cell>

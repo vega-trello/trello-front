@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./components/App.tsx";
 import { RouterProvider } from "react-router/dom";
-import { createBrowserRouter, createHashRouter } from "react-router";
+import { createBrowserRouter, createHashRouter, redirect } from "react-router";
 import { StrictMode } from "react";
 import { Provider } from "./components/ui/provider.tsx";
 import Projects from "./components/Projects.tsx";
@@ -34,12 +34,18 @@ const router = createRouter([
         element: <RequireAuth />,
         children: [
           { path: "/preferences", Component: Preferences },
-          { path: "/projects", Component: Projects },
+          {
+            path: "/projects",
+            loader: async () => {
+              return await API.GetProjects();
+            },
+            Component: Projects,
+          },
           {
             path: "/project/:uuid",
             Component: Project,
             loader: async ({ params }) => {
-              return await API.GetProject(params["uuid"] as string);
+              return await API.GetProject(params["uuid"] as UUID);
             },
           },
         ],

@@ -1,5 +1,7 @@
+type UUID = `${string}-${string}-${string}-${string}-${string}`;
+
 type User = {
-  uuid: string;
+  uuid: UUID;
   username: string;
   createdAt: Date;
 };
@@ -7,13 +9,14 @@ type User = {
 type Project = {
   uuid: string;
   title: string;
+  description: string;
   createdAt: Date;
   updatedAt: Date;
 };
 
 type Column = {
   id: number;
-  projectUUID: string;
+  projectUUID: UUID;
   name: string;
   position: number;
   createdAt: Date;
@@ -21,7 +24,7 @@ type Column = {
 
 type Role = {
   id: number;
-  projectUUID: string;
+  projectUUID: UUID;
   name: string;
   description: string;
 };
@@ -33,8 +36,8 @@ type Permission = {
 };
 
 type Member = {
-  projectUUID: string;
-  userUUID: string;
+  projectUUID: UUID;
+  userUUID: UUID;
   roleID: number;
   joinedAt: Date;
 };
