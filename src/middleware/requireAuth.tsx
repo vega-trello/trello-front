@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import useUser from "../hooks/useUser";
+import useUser from "../entities/user/model/use-user";
 
 function RequireAuth() {
   const user = useUser();

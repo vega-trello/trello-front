@@ -1,18 +1,17 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import App from "./components/App.tsx";
 import { RouterProvider } from "react-router/dom";
-import { createBrowserRouter, createHashRouter, redirect } from "react-router";
+import { createBrowserRouter, createHashRouter } from "react-router";
 import { StrictMode } from "react";
-import { Provider } from "./components/ui/provider.tsx";
-import Projects from "./components/Projects.tsx";
-import Project from "./components/project/Project.tsx";
-import Login from "./components/auth/Login.tsx";
-import Register from "./components/auth/Register.tsx";
-import RootRedirect from "./components/RootRedirect.tsx";
 import Preferences from "./components/Preferences.tsx";
-import API from "./api/api.ts";
 import RequireAuth from "./middleware/requireAuth.tsx";
+import { API, Provider } from "./shared/index.ts";
+import { App } from "./app/index.ts";
+import type { UUID } from "./shared/api/openapi/components/schemas/uuid.ts";
+import { Login, Register } from "./features/auth/index.ts";
+import { Projects } from "./pages/projects/index.ts";
+import { RootRedirect } from "./pages/root-redirect/index.ts";
+import { Project } from "./pages/project/index.ts";
 
 const createRouter =
   import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
@@ -37,7 +36,7 @@ const router = createRouter([
           {
             path: "/projects",
             loader: async () => {
-              return await API.GetProjects();
+              return await API.Project.GetAll({});
             },
             Component: Projects,
           },
@@ -45,7 +44,10 @@ const router = createRouter([
             path: "/project/:uuid",
             Component: Project,
             loader: async ({ params }) => {
-              return await API.GetProject(params["uuid"] as UUID);
+              const uuid = params["uuid"] as UUID;
+              return await API.Project.Get({
+                projectUUID: uuid,
+              });
             },
           },
         ],
