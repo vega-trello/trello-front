@@ -6,7 +6,7 @@ import type {
 } from "../components/parameters/parameter";
 import type { Response } from "../components/responses/response";
 
-const base = window.location.host;
+const base = window.location.origin;
 
 type Transform<T extends Record<number, Response<unknown>>> = {
 	[K in keyof T]: T[K] & {
