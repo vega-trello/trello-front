@@ -1,5 +1,6 @@
 export { PasswordInput } from "./ui/password-input";
-export { Provider } from "./ui/provider";
-export { Toaster } from "./ui/toaster";
+export { ThemeProvider } from "./ui/provider";
+export { ToasterRoot } from "./ui/toaster/toaster-root";
+export { toaster } from "./ui/toaster/toaster";
 export { Tooltip } from "./ui/tooltip";
 export { API } from "./api/api";

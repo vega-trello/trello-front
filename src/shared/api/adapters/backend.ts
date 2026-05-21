@@ -46,7 +46,7 @@ import {
 
 const s = (n: number) => n.toString();
 
-export const BackendAPI: APIAdapter = {
+export const Adapter: APIAdapter = {
 	Auth: {
 		Register: ({ username, password }, signal) =>
 			AuthRegister({}, {}, { username, password }, signal),

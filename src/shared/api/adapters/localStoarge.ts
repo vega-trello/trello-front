@@ -6,14 +6,7 @@ import type {
 	UUID,
 } from "../openapi/components/schemas";
 import type { integer } from "../openapi/components/schemas/integer";
-import type {
-	Assignee,
-	Member,
-	Permission,
-	Role,
-	Tag,
-	Task,
-} from "../openapi/components/schemas";
+import type { Member } from "../openapi/components/schemas";
 
 // ---------- Types matching DBML ----------
 type DBBaseUser = {
@@ -70,12 +63,12 @@ type DBColumn = {
 	created_at: Datetime;
 };
 
-type DBStatus = {
-	id: integer;
-	project_uuid: UUID;
-	name: string;
-	created_at: Datetime;
-};
+// type DBStatus = {
+// 	id: integer;
+// 	project_uuid: UUID;
+// 	name: string;
+// 	created_at: Datetime;
+// };
 
 type DBTask = {
 	id: integer;
@@ -127,6 +120,8 @@ type DB = {
 	task_tag: DBtask_tag[];
 };
 
+type SessionTokens = Record<string, { userUUID: string }>;
+
 // ---------- Helpers ----------
 function generateUUID(): UUID {
 	return crypto.randomUUID() as UUID;
@@ -147,10 +142,20 @@ function _s(v: unknown): string {
 function prom<T>(
 	cb: (
 		resolve: (v: T | Promise<T>) => void,
-		reject: (reason?: any) => void,
+		reject: (reason?: unknown) => void,
 	) => void,
 ): Promise<T> {
 	return new Promise<T>(cb);
+}
+
+function withSessions<T extends { st: SessionTokens }>(
+	cb: (st: SessionTokens) => T,
+): Omit<T, "st"> {
+	const raw = localStorage.getItem("app_tokens");
+	const st: SessionTokens = raw === null ? {} : _p<SessionTokens>(raw);
+	const { st: newST, ...rest } = cb(st);
+	localStorage.setItem("app_tokens", _s(newST));
+	return rest;
 }
 
 function withDB<T extends { db: DB }>(cb: (db: DB) => T): Omit<T, "db"> {
@@ -221,42 +226,19 @@ function getInitialDB(): DB {
 }
 
 // ---------- Auth / Session ----------
-interface Session {
-	token: string;
-	user_uuid: UUID;
-	expires_at: Datetime;
-}
-
-function getSession(): Session | null {
-	const raw = localStorage.getItem("session");
-	return raw ? _p<Session>(raw) : null;
-}
-
-function setSession(session: Session | null): void {
-	if (session) {
-		localStorage.setItem("session", _s(session));
-	} else {
-		localStorage.removeItem("session");
+async function requireAuth(): Promise<
+	{ ok: true; user: DBBaseUser } | { ok: false }
+	> {
+	const token = sessionStorage.getItem("token");
+	if (!token) {
+		return { ok: false };
 	}
-}
-
-async function requireAuth(): Promise<DBBaseUser> {
-	const session = getSession();
-	if (!session || new Date(session.expires_at) < new Date()) {
-		setSession(null);
-		throw { status: 401 } as const;
-	}
-	return prom((resolve, reject) => {
-		withDB((db) => {
-			const user = db.baseUser.find((u) => u.uuid === session.user_uuid);
-			if (!user) {
-				reject({ status: 401 });
-				return { db };
-			}
-			resolve(user);
-			return { db };
-		});
+	const { user } = withDB((db) => {
+		const { userUUID } = withSessions((st) => ({ st, ...st[token] }));
+		return { db, user: db.baseUser.find((u) => u.uuid === userUUID) };
 	});
+	if (user === undefined) return { ok: false };
+	return { ok: true, user };
 }
 
 async function requireProjectAccess(
@@ -264,9 +246,11 @@ async function requireProjectAccess(
 	requiredPermission?: string,
 ): Promise<
 	| { ok: true; project: DBProject; role_id: integer }
-	| { ok: false; status: 404 | 403 }
+	| { ok: false; status: 401 | 403 | 404 }
 > {
-	const user = await requireAuth();
+	const auth = await requireAuth();
+	if (!auth.ok) return { ok: false, status: 401 };
+	const { user } = auth;
 	return prom((resolve) => {
 		withDB((db) => {
 			const project = db.project.find((p) => p.uuid === projectUUID);
@@ -313,7 +297,7 @@ const err = {
 };
 
 // ---------- API Adapter ----------
-export const LocalStorageAPI: APIAdapter = {
+export const Adapter: APIAdapter = {
 	Auth: {
 		Register: ({ username, password }) =>
 			prom((resolve) =>
@@ -361,86 +345,99 @@ export const LocalStorageAPI: APIAdapter = {
 						return { db };
 					}
 					const token = generateUUID();
-					const expires_at = new Date(
-						Date.now() + 7 * 24 * 60 * 60 * 1000,
-					).toISOString() as Datetime;
-					setSession({ token, user_uuid: user.uuid, expires_at });
+					withSessions((st) => {
+						st[token] = { userUUID: user.uuid };
+						return { st };
+					});
+					sessionStorage.setItem("token", token);
 					resolve({ status: 200, body: { token } });
 					return { db };
 				}),
 			),
 
 		Logout: () =>
-			prom((resolve) => {
-				setSession(null);
-				resolve({ status: 200 });
+			requireAuth().then((res) => {
+				if (res.ok) {
+					sessionStorage.removeItem("token");
+					return { status: 200 };
+				}
+				return { status: 401, ...err };
 			}),
 	},
 
 	User: {
-		GetSelf: () => requireAuth().then((self) => ({ status: 200, body: self })),
+		GetSelf: () =>
+			requireAuth().then((res) =>
+				res.ok ? { status: 200, body: res.user } : { status: 401, ...err },
+			),
 
 		Update: (req) =>
-			requireAuth().then((self) =>
-				prom((resolve) =>
-					withDB((db) => {
-						const base = db.baseUser.find((u) => u.uuid === self.uuid)!;
-						const manual = db.manualUser.find(
-							(u) => u.user_uuid === self.uuid,
-						)!;
-						if (manual.password_hash !== req.old_password) {
-							resolve({ status: 403, ...err });
+			requireAuth().then((res) =>
+				res.ok
+					? prom((resolve) =>
+						withDB((db) => {
+							const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
+							const manual = db.manualUser.find(
+								(u) => u.user_uuid === res.user.uuid,
+							)!;
+							if (manual.password_hash !== req.old_password) {
+								resolve({ status: 403, ...err });
+								return { db };
+							}
+							base.username = req.username;
+							manual.password_hash = req.password;
+							base.updated_at = now();
+							resolve({ status: 200, body: structuredClone(base) });
 							return { db };
-						}
-						base.username = req.username;
-						manual.password_hash = req.password;
-						base.updated_at = now();
-						resolve({ status: 200, body: structuredClone(base) });
-						return { db };
-					}),
-				),
+						}),
+					)
+					: { status: 401, ...err },
 			),
 	},
 
 	Project: {
 		GetAll: () =>
-			requireAuth().then((self) =>
-				prom((resolve) =>
-					withDB((db) => {
-						const memberProjects = db.member
-							.filter((m) => m.user_uuid === self.uuid)
-							.map((m) => m.project_uuid);
-						const projects = db.project.filter((p) =>
-							memberProjects.includes(p.uuid),
-						);
-						resolve({ status: 200, body: structuredClone(projects) });
-						return { db };
-					}),
-				),
+			requireAuth().then((res) =>
+				res.ok
+					? prom((resolve) =>
+						withDB((db) => {
+							const memberProjects = db.member
+								.filter((m) => m.user_uuid === res.user.uuid)
+								.map((m) => m.project_uuid);
+							const projects = db.project.filter((p) =>
+								memberProjects.includes(p.uuid),
+							);
+							resolve({ status: 200, body: structuredClone(projects) });
+							return { db };
+						}),
+					)
+					: { status: 401, ...err },
 			),
 
 		Create: (req) =>
-			requireAuth().then((self) =>
-				prom((resolve) =>
-					withDB((db) => {
-						const newProject: DBProject = {
-							uuid: generateUUID(),
-							title: req.title,
-							description: req.description ?? "",
-							created_at: now(),
-							updated_at: now(),
-						};
-						db.project.push(newProject);
-						db.member.push({
-							project_uuid: newProject.uuid,
-							user_uuid: self.uuid,
-							role_id: 1,
-							joined_at: now(),
-						});
-						resolve({ status: 201, body: structuredClone(newProject) });
-						return { db };
-					}),
-				),
+			requireAuth().then((res) =>
+				res.ok
+					? prom((resolve) =>
+						withDB((db) => {
+							const newProject: DBProject = {
+								uuid: generateUUID(),
+								title: req.title,
+								description: req.description,
+								created_at: now(),
+								updated_at: now(),
+							};
+							db.project.push(newProject);
+							db.member.push({
+								project_uuid: newProject.uuid,
+								user_uuid: res.user.uuid,
+								role_id: 1,
+								joined_at: now(),
+							});
+							resolve({ status: 201, body: structuredClone(newProject) });
+							return { db };
+						}),
+					)
+					: { status: 401, ...err },
 			),
 
 		Get: ({ projectUUID }) =>
@@ -850,26 +847,28 @@ export const LocalStorageAPI: APIAdapter = {
 				}),
 
 			Create: ({ projectUUID }) =>
-				requireAuth().then((self) =>
-					requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
-						(res) => {
-							if (!res.ok) return { status: res.status, ...err };
-							return prom((resolve) =>
-								withDB((db) => {
-									const newTask: DBTask = {
-										id: nextId(db.tasks),
-										creator_uuid: self.uuid,
-										title: "",
-										created_at: now(),
-										updated_at: now(),
-									};
-									db.tasks.push(newTask);
-									resolve({ status: 201, body: newTask });
-									return { db };
-								}),
-							);
-						},
-					),
+				requireAuth().then((auth) =>
+					auth.ok
+						? requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
+							(res) => {
+								if (!res.ok) return { status: res.status, ...err };
+								return prom((resolve) =>
+									withDB((db) => {
+										const newTask: DBTask = {
+											id: nextId(db.tasks),
+											creator_uuid: auth.user.uuid,
+											title: "",
+											created_at: now(),
+											updated_at: now(),
+										};
+										db.tasks.push(newTask);
+										resolve({ status: 201, body: newTask });
+										return { db };
+									}),
+								);
+							},
+						)
+						: { status: 401, ...err },
 				),
 
 			Get: ({ projectUUID, taskID }) =>

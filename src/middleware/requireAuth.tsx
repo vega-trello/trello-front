@@ -1,13 +1,14 @@
 import { Navigate, Outlet } from "react-router";
-import useUser from "../entities/user/model/use-user";
+import { useUser } from "../entities/user";
+import { Spinner } from "@chakra-ui/react";
 
 function RequireAuth() {
-  const user = useUser();
+	const { user, loading } = useUser();
 
-  if (user === undefined) return null;
-  if (user === null) return <Navigate to="/login" replace />;
+	if (loading) return <Spinner />;
+	if (!loading && user === null) return <Navigate to="/login" replace />;
 
-  return <Outlet />;
+	return <Outlet />;
 }
 
 export default RequireAuth;

@@ -1,5 +1,7 @@
 import type { APIAdapter } from "./adapter";
-import BackendAPI from "./adapters/backend";
-import LocalStorageAPI from "./adapters/localStoarge";
+import { Adapter as BackendAdapter } from "./adapters/backend";
+import { Adapter as LocalStorageAdapter } from "./adapters/localStoarge";
 
-export const API: APIAdapter = import.meta.env.PROD ? BackendAPI : LocalStorageAPI;
+export const API: APIAdapter = import.meta.env.PROD
+	? BackendAdapter
+	: LocalStorageAdapter;
