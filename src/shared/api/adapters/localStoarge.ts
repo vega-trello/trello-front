@@ -336,12 +336,21 @@ export const Adapter: APIAdapter = {
 				withDB((db) => {
 					const user = db.baseUser.find((u) => u.username === username);
 					if (!user) {
-						resolve({ status: 401, ...err });
+						resolve({
+							status: 401,
+							body: { error: "Credentials", message: "Неверные данные" },
+						});
 						return { db };
 					}
 					const manual = db.manualUser.find((m) => m.user_uuid === user.uuid);
 					if (!manual || manual.password_hash !== password) {
-						resolve({ status: 401, ...err });
+						resolve({
+							status: 401,
+							body: {
+								error: "Credentials",
+								message: "Неверные данные",
+							},
+						});
 						return { db };
 					}
 					const token = generateUUID();

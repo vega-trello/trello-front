@@ -10,6 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { HiDotsVertical } from "react-icons/hi";
 import type { Project } from "../../shared/api/openapi/components/schemas";
+import type { PropsWithChildren } from "react";
 
 export type ProjectCallbacks = {
 	onSelect: (project: Project) => void;
@@ -22,6 +23,49 @@ export type ProjectsCardsProps = {
 } & ProjectCallbacks;
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString();
+
+function CardMenu({
+	children,
+	onEdit,
+	onDelete,
+	project,
+}: PropsWithChildren & {
+	project: Project;
+	onEdit: (project: Project) => void;
+	onDelete: (project: Project) => void;
+}) {
+	return (
+		<Menu.Root>
+			<Menu.Trigger asChild>{children}</Menu.Trigger>
+			<Portal>
+				<Menu.Positioner>
+					<Menu.Content>
+						<Menu.Item
+							value="edit"
+							onClick={(e) => {
+								e.stopPropagation();
+								onEdit(project);
+							}}
+						>
+							Редактировать
+						</Menu.Item>
+						<Menu.Item
+							value="delete"
+							color="fg.error"
+							_hover={{ bg: "bg.error", color: "fg.error" }}
+							onClick={(e) => {
+								e.stopPropagation();
+								onDelete(project);
+							}}
+						>
+							Удалить
+						</Menu.Item>
+					</Menu.Content>
+				</Menu.Positioner>
+			</Portal>
+		</Menu.Root>
+	);
+}
 
 function ProjectCard({
 	project,
@@ -43,61 +87,30 @@ function ProjectCard({
 				<Heading size="md" lineClamp={1}>
 					{project.title}
 				</Heading>
-				<Menu.Root>
-					<Menu.Trigger asChild>
-						<IconButton
-							aria-label="Действия"
-							variant="ghost"
-							size="sm"
-							position="absolute"
-							top="2"
-							right="2"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<HiDotsVertical />
-						</IconButton>
-					</Menu.Trigger>
-					<Portal>
-						<Menu.Positioner>
-							<Menu.Content>
-								<Menu.Item
-									value="edit"
-									onClick={(e) => {
-										e.stopPropagation();
-										onEdit(project);
-									}}
-								>
-									Редактировать
-								</Menu.Item>
-								<Menu.Item
-									value="delete"
-									color="fg.error"
-									_hover={{ bg: "bg.error", color: "fg.error" }}
-									onClick={(e) => {
-										e.stopPropagation();
-										onDelete(project);
-									}}
-								>
-									Удалить
-								</Menu.Item>
-							</Menu.Content>
-						</Menu.Positioner>
-					</Portal>
-				</Menu.Root>
+				<CardMenu {...{ onDelete, onEdit, project }}>
+					<IconButton
+						aria-label="Действия"
+						variant="ghost"
+						size="sm"
+						position="absolute"
+						top="2"
+						right="2"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<HiDotsVertical />
+					</IconButton>
+				</CardMenu>
 			</Card.Header>
 
-			<Card.Body py="1">
+			<Card.Body>
 				<Text color="fg.muted" whiteSpace="normal">
 					{project.description ?? "—"}
 				</Text>
 			</Card.Body>
 
-			<Card.Footer pt="2" display="flex" flexDir="column" gap="1">
+			<Card.Footer>
 				<Text fontSize="sm" color="fg.subtle">
-					Создан: {formatDate(project.created_at)}
-				</Text>
-				<Text fontSize="sm" color="fg.subtle">
-					Обновлён: {formatDate(project.updated_at)}
+					{formatDate(project.created_at)}
 				</Text>
 			</Card.Footer>
 		</Card.Root>

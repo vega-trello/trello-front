@@ -20,8 +20,8 @@ export function User() {
 			<Portal>
 				<Menu.Positioner>
 					<Menu.Content>
-						<Menu.Item value="preferences">
-							<NavLink to="/preferences">Настройки</NavLink>
+						<Menu.Item value="account">
+							<NavLink to="/account">Аккаунт</NavLink>
 						</Menu.Item>
 						<Menu.Separator />
 						<Menu.Item value="quit" onSelect={() => logout.mutate({})}>

@@ -36,10 +36,6 @@ export function Project() {
 	useSetHeading(project?.title);
 
 	const tab = query.get("tab") ?? "table";
-	if (query.get("tab") == null)
-		setTimeout(() =>
-			setQuery((q) => ({ ...q, tab: "columns" }), { replace: true }),
-		);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isLoading) return <Spinner size="xl" />;

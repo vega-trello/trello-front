@@ -17,5 +17,8 @@ export const useSetHeading = (heading: React.ReactNode) => {
 
 	useEffect(() => {
 		context.setHeading(heading);
+		return () => {
+			context.setHeading(null);
+		};
 	}, [context, heading]);
 };
