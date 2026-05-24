@@ -229,15 +229,24 @@ function getInitialDB(): DB {
 async function requireAuth(): Promise<
 	{ ok: true; user: DBBaseUser } | { ok: false }
 > {
+	console.group('requireAuth():');
+	console.log("getting token...");
 	const token = sessionStorage.getItem("token");
-	if (!token) {
+	console.log("got token");
+	if (token === null) {
+		console.groupEnd();
 		return { ok: false };
 	}
+	console.log("getting session");
 	const { user } = withDB((db) => {
 		const { userUUID } = withSessions((st) => ({ st, ...st[token] }));
 		return { db, user: db.baseUser.find((u) => u.uuid === userUUID) };
 	});
-	if (user === undefined) return { ok: false };
+	if (user === undefined) {
+		console.groupEnd();
+		return { ok: false };
+	}
+	console.groupEnd();
 	return { ok: true, user };
 }
 
@@ -375,33 +384,34 @@ export const Adapter: APIAdapter = {
 	},
 
 	Self: {
-		Get: () =>
-			requireAuth().then((res) =>
-				res.ok ? { status: 200, body: res.user } : { status: 401, ...err },
-			),
+		Get: async () => {
+			const res = await requireAuth();
+			if (res.ok) return { status: 200, body: res.user };
+			return { status: 401, ...err };
+		},
 
-		Update: (req) =>
-			requireAuth().then((res) =>
-				res.ok
-					? prom((resolve) =>
-							withDB((db) => {
-								const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
-								const manual = db.manualUser.find(
-									(u) => u.user_uuid === res.user.uuid,
-								)!;
-								if (manual.password_hash !== req.old_password) {
-									resolve({ status: 403, ...err });
-									return { db };
-								}
-								base.username = req.username;
-								manual.password_hash = req.password;
-								base.updated_at = now();
-								resolve({ status: 200, body: structuredClone(base) });
-								return { db };
-							}),
-						)
-					: { status: 401, ...err },
-			),
+		Update: async (req) => {
+			const res = await requireAuth();
+			if (res.ok) {
+				return await prom((resolve) =>
+					withDB((db) => {
+						const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
+						const manual = db.manualUser.find(
+							(u) => u.user_uuid === res.user.uuid,
+						)!;
+						if (manual.password_hash !== req.old_password) {
+							resolve({ status: 403, ...err });
+							return { db };
+						}
+						base.username = req.username;
+						manual.password_hash = req.password;
+						base.updated_at = now();
+						resolve({ status: 200, body: structuredClone(base) });
+						return { db };
+					}),
+				);
+			} else return { status: 401, ...err };
+		},
 	},
 
 	User: {

@@ -2,9 +2,8 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import { RouterProvider } from "react-router/dom";
 import { createBrowserRouter, createHashRouter } from "react-router";
-import { StrictMode } from "react";
 import { App } from "./app";
-import { Account, Project, Projects, RootRedirect } from "./pages";
+import { Account, Project, Projects } from "./pages";
 import { Login, Register } from "./features";
 import { RequireAuth, RequireGuest } from "./middleware";
 import { HeadingProvider, ThemeProvider } from "./shared";
@@ -17,18 +16,15 @@ const queryClient = new QueryClient();
 const router = createRouter([
 	{
 		element: (
-			<StrictMode>
-				<QueryClientProvider client={queryClient}>
-					<ThemeProvider>
-						<HeadingProvider>
-							<App />
-						</HeadingProvider>
-					</ThemeProvider>
-				</QueryClientProvider>
-			</StrictMode>
+			<QueryClientProvider client={queryClient}>
+				<ThemeProvider>
+					<HeadingProvider>
+						<App />
+					</HeadingProvider>
+				</ThemeProvider>
+			</QueryClientProvider>
 		),
 		children: [
-			{ index: true, Component: RootRedirect },
 			{
 				element: <RequireGuest />,
 				children: [
