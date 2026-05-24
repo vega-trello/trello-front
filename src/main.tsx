@@ -3,15 +3,12 @@ import "./index.css";
 import { RouterProvider } from "react-router/dom";
 import { createBrowserRouter, createHashRouter } from "react-router";
 import { StrictMode } from "react";
-import { ThemeProvider } from "./shared";
 import { App } from "./app";
-import { Login, Register } from "./features/auth";
-import { Projects } from "./pages/projects";
-import { RootRedirect } from "./pages/root-redirect";
-import { Project } from "./pages/project";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Account } from "./pages/account";
+import { Account, Project, Projects, RootRedirect } from "./pages";
+import { Login, Register } from "./features";
 import { RequireAuth, RequireGuest } from "./middleware";
+import { HeadingProvider, ThemeProvider } from "./shared";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const createRouter =
 	import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
@@ -23,7 +20,9 @@ const router = createRouter([
 			<StrictMode>
 				<QueryClientProvider client={queryClient}>
 					<ThemeProvider>
-						<App />
+						<HeadingProvider>
+							<App />
+						</HeadingProvider>
 					</ThemeProvider>
 				</QueryClientProvider>
 			</StrictMode>

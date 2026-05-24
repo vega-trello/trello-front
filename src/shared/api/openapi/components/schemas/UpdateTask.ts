@@ -6,6 +6,6 @@ export type UpdateTask = {
 	description: string | null;
 	start_date: Datetime | null;
 	end_date: Datetime | null;
-	column_id: integer | null;
+	column_id: integer;
 	archived: boolean | null;
-}
+};

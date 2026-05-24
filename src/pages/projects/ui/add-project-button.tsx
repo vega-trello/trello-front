@@ -10,9 +10,9 @@ import {
 	Stat,
 	Textarea,
 } from "@chakra-ui/react";
-import { useCreateProject } from "../../../entities/project/model/use-project-mutation";
+import { useCreateProject } from "../../../entities/project";
 import type { CreateProject } from "../../../shared/api/openapi/components/schemas";
-import { errorMessage } from "../../../shared/model/error-message";
+import { errorMessage } from "../../../shared";
 
 export function AddProjectButton() {
 	const ref = useRef<HTMLInputElement | null>(null);

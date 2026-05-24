@@ -4,7 +4,7 @@ import type { UUID } from "./uuid";
 
 export type Task = {
 	id: number;
-	column_id?: integer;
+	column_id: integer;
 	status_id?: integer;
 	creator_uuid: UUID;
 	title?: string;

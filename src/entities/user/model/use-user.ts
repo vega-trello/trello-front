@@ -1,13 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { API, QueryKeys } from "../../../shared";
+import { API, QueryKeys, useApiQuery } from "../../../shared";
+import type { UUID } from "../../../shared/api/openapi/components/schemas";
 
-export const useUser = () =>
-	useQuery({
-		queryKey: QueryKeys.self,
-		queryFn: async ({ signal }) => {
-			const res = await API.User.GetSelf({}, signal);
-			if (res.status === 200) return res.body;
-			return null;
+export const useUser = (userUUID: UUID) =>
+	useApiQuery(
+		API.User.Get,
+		200,
+		{ userUUID },
+		{
+			queryKey: QueryKeys.user(userUUID),
 		},
-		retry: false,
-	});
+	);

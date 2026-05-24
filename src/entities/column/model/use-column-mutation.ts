@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { API, QueryKeys } from "../../../shared";
-import { useApiMutation } from "../../../shared/model/use-api-mutation";
+import { API, QueryKeys, useApiMutation } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
 
 export const useCreateColumn = () => {

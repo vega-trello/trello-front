@@ -1,7 +1,6 @@
-import { API, QueryKeys } from "../../../shared";
+import { API, QueryKeys, useApiQuery } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
-import { useApiQuery } from "../../../shared/model/use-api-query";
 
 export const useTasks = (projectUUID: UUID) =>
 	useApiQuery(
@@ -19,6 +18,6 @@ export const useTask = (projectUUID: UUID, taskID: integer) =>
 		200,
 		{ projectUUID, taskID },
 		{
-			queryKey: QueryKeys.task(projectUUID, taskID),
+			queryKey: QueryKeys.task(taskID),
 		},
 	);

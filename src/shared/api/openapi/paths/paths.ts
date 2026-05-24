@@ -88,17 +88,17 @@ export const AuthLogout = POST<
 	}
 >("/auth/logout");
 
-/* ---------------------------------- User ---------------------------------- */
+/* ---------------------------------- Self ---------------------------------- */
 
-export const UserGet = GET<
+export const SelfGet = GET<
 	[],
 	{
 		200: Response<SelfUser>;
 		401: Unauthorized;
 	}
->("/user");
+>("/self");
 
-export const UserUpdate = PATCH<
+export const SelfUpdate = PATCH<
 	[],
 	UpdateUser,
 	{
@@ -106,6 +106,16 @@ export const UserUpdate = PATCH<
 		400: BadRequest;
 		401: Unauthorized;
 		403: Forbidden;
+	}
+>("/self");
+
+/* ---------------------------------- User ---------------------------------- */
+export const UserGet = GET<
+	[UserUUID],
+	{
+		200: Response<User>;
+		401: Unauthorized;
+		404: EmptyResponse;
 	}
 >("/user");
 
@@ -347,7 +357,7 @@ export const TaskDelete = DELETE<
 /* ------------------------------- Task Tags -------------------------------- */
 
 export const TaskTagGetAll = GET<
-	[ProjectUUID, TaskID],
+	[TaskID],
 	{
 		200: Response<Tag[]>;
 		401: Unauthorized;
@@ -357,7 +367,7 @@ export const TaskTagGetAll = GET<
 >("/projects/{projectUUID}/task/tags");
 
 export const TaskTagCreate = POST<
-	[ProjectUUID, TaskID, TagID],
+	[TaskID, TagID],
 	{},
 	{
 		204: EmptyResponse;
@@ -369,7 +379,7 @@ export const TaskTagCreate = POST<
 >("/projects/{projectUUID}/task/tags");
 
 export const TaskTagDelete = DELETE<
-	[ProjectUUID, TaskID, TagID],
+	[TaskID, TagID],
 	{
 		204: EmptyResponse;
 		401: Unauthorized;

@@ -72,7 +72,7 @@ type DBColumn = {
 
 type DBTask = {
 	id: integer;
-	column_id?: integer;
+	column_id: integer;
 	status_id?: integer;
 	creator_uuid: UUID;
 	title?: string;
@@ -365,8 +365,8 @@ export const Adapter: APIAdapter = {
 			}),
 	},
 
-	User: {
-		GetSelf: () =>
+	Self: {
+		Get: () =>
 			requireAuth().then((res) =>
 				res.ok ? { status: 200, body: res.user } : { status: 401, ...err },
 			),
@@ -393,6 +393,22 @@ export const Adapter: APIAdapter = {
 						)
 					: { status: 401, ...err },
 			),
+	},
+
+	User: {
+		Get: async ({ userUUID }) => {
+			const res = await requireAuth();
+			if (!res.ok) return { status: 401, ...err };
+			const { user } = withDB((db) => ({
+				db,
+				user: db.baseUser.find((u) => u.uuid === userUUID),
+			}));
+			if (user === undefined) return { status: 404 };
+			return {
+				status: 200,
+				body: { username: user.username, uuid: user.uuid },
+			};
+		},
 	},
 
 	Project: {
@@ -649,10 +665,7 @@ export const Adapter: APIAdapter = {
 							if (c.position <= col.position) return;
 							c.position -= 1;
 						});
-						db.tasks = db.tasks.map((t) => ({
-							...t,
-							column_id: t.column_id === columnID ? undefined : t.column_id,
-						}));
+						db.tasks = db.tasks.filter((t) => t.column_id !== columnID);
 						resolve({ status: 204 });
 						return { db };
 					});
@@ -853,7 +866,7 @@ export const Adapter: APIAdapter = {
 					);
 				}),
 
-			Create: ({ projectUUID }) =>
+			Create: ({ projectUUID, ...rest }) =>
 				requireAuth().then((auth) =>
 					auth.ok
 						? requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
@@ -864,9 +877,9 @@ export const Adapter: APIAdapter = {
 											const newTask: DBTask = {
 												id: nextId(db.tasks),
 												creator_uuid: auth.user.uuid,
-												title: "",
 												created_at: now(),
 												updated_at: now(),
+												...rest,
 											};
 											db.tasks.push(newTask);
 											resolve({ status: 201, body: newTask });
@@ -905,23 +918,22 @@ export const Adapter: APIAdapter = {
 									resolve({ status: 404 });
 									return { db };
 								}
+								console.log(update);
 								task.title = update.title ?? undefined;
 								task.description = update.description ?? undefined;
 								task.start_date = update.start_date ?? undefined;
 								task.end_date = update.end_date ?? undefined;
-								if (update.column_id === null) task.column_id = undefined;
-								else if (update.column_id !== undefined) {
-									const newCol = db.column.find(
-										(c) =>
-											c.id === update.column_id &&
-											c.project_uuid === projectUUID,
-									);
-									if (newCol === undefined) {
-										resolve({ status: 400, ...err });
-										return { db };
-									}
-									task.column_id = update.column_id;
+
+								const newCol = db.column.find(
+									(c) =>
+										c.id === update.column_id && c.project_uuid === projectUUID,
+								);
+								if (newCol === undefined) {
+									resolve({ status: 400, ...err });
+									return { db };
 								}
+								task.column_id = update.column_id;
+
 								task.archived_at = update.archived
 									? task.archived_at === undefined
 										? now()
@@ -955,33 +967,48 @@ export const Adapter: APIAdapter = {
 				),
 
 			Tags: {
-				GetAll: ({ projectUUID, taskID }) =>
-					requireProjectAccess(projectUUID).then((res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const task = db.tasks.find((t) => t.id === taskID);
-								if (task === undefined || task.deleted_at !== undefined) {
-									resolve({ status: 404 });
-									return { db };
-								}
-								const tagIds = db.task_tag
-									.filter((tt) => tt.task_id === taskID)
-									.map((tt) => tt.tag_id);
-								const tags = db.tag.filter((t) => tagIds.includes(t.id));
-								resolve({ status: 200, body: tags });
-								return { db };
-							}),
-						);
-					}),
+				GetAll: async ({ taskID }) => {
+					const { task } = withDB((db) => ({
+						db,
+						task: db.tasks.find((t) => t.id === taskID),
+					}));
+					if (task === undefined || task.deleted_at !== undefined)
+						return { status: 404 };
+					const { col } = withDB((db) => ({
+						db,
+						col: db.column.find((c) => task.column_id === c.id),
+					}));
+					if (col === undefined) return { status: 404 };
+					const res = await requireProjectAccess(col.project_uuid);
+					if (!res.ok) return { status: res.status, ...err };
 
-				Create: async ({ projectUUID, taskID, tagID }) => {
+					const { tags } = withDB((db) => {
+						const tagIds = db.task_tag
+							.filter((tt) => tt.task_id === taskID)
+							.map((tt) => tt.tag_id);
+						return { db, tags: db.tag.filter((t) => tagIds.includes(t.id)) };
+					});
+					return { status: 200, body: tags };
+				},
+
+				Create: async ({ taskID, tagID }) => {
+					const { task } = withDB((db) => ({
+						db,
+						task: db.tasks.find((t) => t.id === taskID),
+					}));
+					if (task === undefined || task.deleted_at !== undefined)
+						return { status: 404 };
+					const { col } = withDB((db) => ({
+						db,
+						col: db.column.find((c) => task.column_id === c.id),
+					}));
+					if (col === undefined) return { status: 404 };
 					const res = await requireProjectAccess(
-						projectUUID,
+						col.project_uuid,
 						PERMISSIONS.EDIT_TASKS,
 					);
 					if (!res.ok) return { status: res.status, ...err };
-					return prom((resolve) =>
+					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
 							if (task === undefined || task.deleted_at !== undefined) {
@@ -989,7 +1016,7 @@ export const Adapter: APIAdapter = {
 								return { db };
 							}
 							const tag = db.tag.find(
-								(t) => t.id === tagID && t.project_uuid === projectUUID,
+								(t) => t.id === tagID && t.project_uuid === col.project_uuid,
 							);
 							if (tag === undefined) {
 								resolve({ status: 404 });
@@ -1013,13 +1040,24 @@ export const Adapter: APIAdapter = {
 					);
 				},
 
-				Delete: async ({ projectUUID, taskID, tagID }) => {
+				Delete: async ({ taskID, tagID }) => {
+					const { task } = withDB((db) => ({
+						db,
+						task: db.tasks.find((t) => t.id === taskID),
+					}));
+					if (task === undefined || task.deleted_at !== undefined)
+						return { status: 404 };
+					const { col } = withDB((db) => ({
+						db,
+						col: db.column.find((c) => task.column_id === c.id),
+					}));
+					if (col === undefined) return { status: 404 };
 					const res = await requireProjectAccess(
-						projectUUID,
+						col.project_uuid,
 						PERMISSIONS.EDIT_TASKS,
 					);
 					if (!res.ok) return { status: res.status, ...err };
-					return prom((resolve) =>
+					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
 							if (task === undefined || task.deleted_at !== undefined) {

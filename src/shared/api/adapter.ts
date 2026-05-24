@@ -74,8 +74,8 @@ export type APIAdapter = {
 		}>;
 	};
 
-	User: {
-		GetSelf: (
+	Self: {
+		Get: (
 			req: {},
 			signal?: AbortSignal,
 		) => Responses<{
@@ -91,6 +91,17 @@ export type APIAdapter = {
 			400: BadRequest;
 			401: Unauthorized;
 			403: Forbidden;
+		}>;
+	};
+
+	User: {
+		Get: (
+			req: { userUUID: UUID },
+			signal?: AbortSignal,
+		) => Responses<{
+			200: Response<User>;
+			401: Unauthorized;
+			404: EmptyResponse;
 		}>;
 	};
 
@@ -320,7 +331,7 @@ export type APIAdapter = {
 
 			Tags: {
 				GetAll: (
-					req: { projectUUID: UUID; taskID: integer },
+					req: { taskID: integer },
 					signal?: AbortSignal,
 				) => Responses<{
 					200: Response<Tag[]>;
@@ -330,7 +341,7 @@ export type APIAdapter = {
 				}>;
 
 				Create: (
-					req: { projectUUID: UUID; taskID: integer; tagID: integer },
+					req: { taskID: integer; tagID: integer },
 					signal?: AbortSignal,
 				) => Responses<{
 					204: EmptyResponse;
@@ -342,7 +353,6 @@ export type APIAdapter = {
 
 				Delete: (
 					req: {
-						projectUUID: UUID;
 						taskID: integer;
 						tagID: integer;
 					},

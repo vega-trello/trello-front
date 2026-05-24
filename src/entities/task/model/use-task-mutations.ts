@@ -1,6 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { API, QueryKeys } from "../../../shared";
-import { useApiMutation } from "../../../shared/model/use-api-mutation";
+import { API, QueryKeys, useApiMutation } from "../../../shared";
 
 export const useCreateTask = () => {
 	const queryClient = useQueryClient();
@@ -17,7 +16,7 @@ export const useUpdateTask = () => {
 
 	return useApiMutation(API.Project.Tasks.Update, 200, {
 		onSuccess: (task, { projectUUID, taskID }) => {
-			queryClient.setQueryData(QueryKeys.task(projectUUID, taskID), task);
+			queryClient.setQueryData(QueryKeys.task(taskID), task);
 			queryClient.invalidateQueries({ queryKey: QueryKeys.tasks(projectUUID) });
 		},
 	});
@@ -29,7 +28,7 @@ export const useDeleteTask = () => {
 	return useApiMutation(API.Project.Tasks.Delete, 204, {
 		onSuccess: (_, { taskID, projectUUID }) => {
 			queryClient.removeQueries({
-				queryKey: QueryKeys.task(projectUUID, taskID),
+				queryKey: QueryKeys.task(taskID),
 			});
 			queryClient.invalidateQueries({ queryKey: QueryKeys.tasks(projectUUID) });
 		},

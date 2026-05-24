@@ -9,3 +9,5 @@ export {
 	useAddAssignee,
 	useRemoveAssignee,
 } from "./model/use-assignee-mutations";
+export { TaskCard } from "./ui/task-card";
+export { useTaskTags } from "./model/use-task-tags";

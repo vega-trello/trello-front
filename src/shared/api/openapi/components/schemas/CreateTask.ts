@@ -6,5 +6,5 @@ export type CreateTask = {
 	description?: string;
 	start_date?: Datetime;
 	end_date?: Datetime;
-	column_id?: integer;
-}
+	column_id: integer;
+};

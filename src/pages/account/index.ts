@@ -1,1 +1,1 @@
-export { Page as Account } from "./ui/page";
+export { Page as Account } from "./ui/account";

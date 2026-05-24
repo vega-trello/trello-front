@@ -1,5 +1,5 @@
 import { API, QueryKeys } from "../../../shared";
-import { useApiQuery } from "../../../shared/model/use-api-query";
+import { useApiQuery } from "../../../shared";
 
 export const useProjects = () =>
 	useApiQuery(

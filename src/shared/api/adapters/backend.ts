@@ -40,8 +40,9 @@ import {
 	TaskTagDelete,
 	TaskTagGetAll,
 	TaskUpdate,
+	SelfGet,
+	SelfUpdate,
 	UserGet,
-	UserUpdate,
 } from "../openapi/paths/paths";
 
 const s = (n: number) => n.toString();
@@ -54,9 +55,12 @@ export const Adapter: APIAdapter = {
 			AuthLogin(username, password, signal),
 		Logout: (_, signal) => AuthLogout({}, {}, {}, signal),
 	},
+	Self: {
+		Get: (_, signal) => SelfGet({}, {}, signal),
+		Update: ({ ...rest }, signal) => SelfUpdate({}, {}, rest, signal),
+	},
 	User: {
-		GetSelf: (_, signal) => UserGet({}, {}, signal),
-		Update: ({ ...rest }, signal) => UserUpdate({}, {}, rest, signal),
+		Get: ({ userUUID }, signal) => UserGet({}, { userUUID }, signal),
 	},
 	Project: {
 		GetAll: (_, signal) => ProjectGetAll({}, {}, signal),
@@ -105,21 +109,17 @@ export const Adapter: APIAdapter = {
 				TaskDelete({ projectUUID }, { taskID: s(taskID) }, signal),
 
 			Tags: {
-				GetAll: ({ projectUUID, taskID }, signal) =>
-					TaskTagGetAll({ projectUUID }, { taskID: s(taskID) }, signal),
-				Create: ({ projectUUID, taskID, tagID, ...rest }, signal) =>
+				GetAll: ({ taskID }, signal) =>
+					TaskTagGetAll({}, { taskID: s(taskID) }, signal),
+				Create: ({ taskID, tagID, ...rest }, signal) =>
 					TaskTagCreate(
-						{ projectUUID },
+						{},
 						{ taskID: s(taskID), tagID: s(tagID) },
 						rest,
 						signal,
 					),
-				Delete: ({ projectUUID, taskID, tagID }, signal) =>
-					TaskTagDelete(
-						{ projectUUID },
-						{ taskID: s(taskID), tagID: s(tagID) },
-						signal,
-					),
+				Delete: ({ taskID, tagID }, signal) =>
+					TaskTagDelete({}, { taskID: s(taskID), tagID: s(tagID) }, signal),
 			},
 		},
 		Assignees: {

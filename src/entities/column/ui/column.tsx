@@ -1,19 +1,13 @@
 import {
 	Box,
-	Button,
-	createOverlay,
-	Dialog,
-	Field,
 	For,
 	Group,
 	Heading,
 	IconButton,
-	Input,
 	Menu,
 	MenuTrigger,
 	Portal,
 	Spinner,
-	Stack,
 	VStack,
 } from "@chakra-ui/react";
 import type {
@@ -21,90 +15,24 @@ import type {
 	UUID,
 } from "../../../shared/api/openapi/components/schemas";
 import { HiArrowLeft, HiArrowRight, HiDotsHorizontal } from "react-icons/hi";
-import { useTasks } from "../../task";
+import { TaskCard, useTasks } from "../../task";
+import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
+import { ErrorAlert } from "../../../widgets";
+import { useCallback } from "react";
+import { errorMessage, toaster } from "../../../shared";
+import { AddTaskButton } from "./add-task-button";
 import {
+	useColumn,
 	useDeleteColumn,
 	useMoveColumn,
-	useUpdateColumn,
-} from "../model/use-column-mutation";
-import { useColumn } from "../model/use-column";
-import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
-import { ErrorAlert } from "../../../widgets/error-alert/ui/error-alert";
-import { useCallback, useRef, useState } from "react";
-import { toaster } from "../../../shared";
-import { errorMessage } from "../../../shared/model/error-message";
+} from "../";
+import { renameDialog } from "./rename-dialog";
+import { deleteDialog } from "./delete-dialog";
 
 export type ColumnProps = {
 	projectUUID: UUID;
 	columnID: integer;
 };
-
-const openRenameDialog = createOverlay<{ column: Column }>(
-	({ column, open, onOpenChange }) => {
-		const ref = useRef<HTMLInputElement | null>(null);
-		const [name, setName] = useState(column.name);
-		const updateColumn = useUpdateColumn();
-
-		const handleClose = useCallback(
-			() => onOpenChange?.({ open: false }),
-			[onOpenChange],
-		);
-
-		const submit = useCallback(() => {
-			updateColumn.mutate(
-				{
-					columnID: column.id,
-					name,
-				},
-				{ onSuccess: handleClose },
-			);
-		}, [updateColumn, name, column, handleClose]);
-
-		return (
-			<Dialog.Root
-				open={open}
-				onOpenChange={(e) => !e.open && handleClose()}
-				initialFocusEl={() => ref.current}
-				motionPreset="slide-in-bottom"
-				placement="center"
-			>
-				<Portal>
-					<Dialog.Backdrop />
-					<Dialog.Positioner>
-						<Dialog.Content>
-							<Dialog.Header>
-								<Dialog.Title>Новая колонка</Dialog.Title>
-							</Dialog.Header>
-							<Dialog.Body>
-								<Stack gap="4">
-									<Field.Root>
-										<Field.Label>Название</Field.Label>
-										<Input
-											placeholder="Новое название"
-											ref={ref}
-											value={name}
-											onChange={(e) => setName(e.target.value)}
-										/>
-									</Field.Root>
-								</Stack>
-							</Dialog.Body>
-							<Dialog.Footer>
-								<Dialog.ActionTrigger asChild>
-									<Button variant="ghost">Отменить</Button>
-								</Dialog.ActionTrigger>
-								<Dialog.ActionTrigger asChild>
-									<Button variant="solid" type="submit" onClick={submit}>
-										Переименовать
-									</Button>
-								</Dialog.ActionTrigger>
-							</Dialog.Footer>
-						</Dialog.Content>
-					</Dialog.Positioner>
-				</Portal>
-			</Dialog.Root>
-		);
-	},
-);
 
 function ColumnMenu({
 	projectUUID,
@@ -115,10 +43,8 @@ function ColumnMenu({
 }) {
 	const deleteColumn = useDeleteColumn(projectUUID);
 	const moveColumn = useMoveColumn();
-	const [open, setOpen] = useState(false);
 	const move = useCallback(
 		(direction: "right" | "left") => {
-			setOpen(false);
 			moveColumn.mutate(
 				{
 					columnID: column.id,
@@ -140,13 +66,24 @@ function ColumnMenu({
 		);
 	}, [deleteColumn, column]);
 
+	const handleMoveLeft = useCallback(() => move("left"), [move]);
+	const handleMoveRight = useCallback(() => move("right"), [move]);
+
+	const handleRename = useCallback(() => {
+		renameDialog.open("edit", { column });
+	}, [column]);
+
+	const handleDelete = useCallback(() => {
+		deleteDialog.open(`column-${column.id}`, { callback: _delete });
+	}, [column, _delete]);
+
 	return (
-		<Menu.Root open={open} onOpenChange={({ open }) => setOpen(open)}>
+		<Menu.Root>
 			<MenuTrigger asChild>
 				<IconButton
 					aria-label="Действия"
 					variant="ghost"
-					size="sm"
+					size="2xs"
 					onClick={(e) => e.stopPropagation()}
 				>
 					<HiDotsHorizontal />
@@ -161,7 +98,7 @@ function ColumnMenu({
 								width="50%"
 								display="flex"
 								justifyContent="flex-start"
-								onClick={() => move("left")}
+								onClick={handleMoveLeft}
 							>
 								<HiArrowLeft />
 							</Menu.Item>
@@ -170,22 +107,19 @@ function ColumnMenu({
 								width="50%"
 								display="flex"
 								justifyContent="flex-end"
-								onClick={() => move("right")}
+								onClick={handleMoveRight}
 							>
 								<HiArrowRight />
 							</Menu.Item>
 						</Group>
-						<Menu.Item
-							value="edit"
-							onClick={() => openRenameDialog.open("edit", { column })}
-						>
+						<Menu.Item value="edit" onClick={handleRename}>
 							Переименовать
 						</Menu.Item>
 						<Menu.Item
 							value="delete"
 							color="fg.error"
 							_hover={{ bg: "bg.error", color: "fg.error" }}
-							onClick={_delete}
+							onClick={handleDelete}
 						>
 							Удалить
 						</Menu.Item>
@@ -200,7 +134,8 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	const { data: column, isLoading, isError, error } = useColumn(columnID);
 	const { data: allTasks } = useTasks(projectUUID);
 	const tasks = allTasks?.filter(
-		(task) => task.column_id === (column?.id ?? -1),
+		(task) =>
+			task.archived_at === undefined && task.column_id === (column?.id ?? -1),
 	);
 
 	if (isError) return <ErrorAlert error={error} />;
@@ -211,17 +146,18 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 		<Box
 			bg="bg.subtle"
 			borderRadius="lg"
-			p={4}
-			w="280px"
-			minH="100px"
+			p="2"
+			width="100%"
+			maxHeight="100%"
+			overflow="hidden"
 			display="flex"
 			flexDirection="column"
 			flexShrink={0}
+			id={`column-${column.id}`}
+			gap="4"
 		>
-			<openRenameDialog.Viewport />
 			<Heading
 				size="sm"
-				mb={3}
 				px={1}
 				style={{
 					display: "flex",
@@ -234,13 +170,26 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 				<ColumnMenu {...{ projectUUID, column }} />
 			</Heading>
 
-			<VStack gap={2} overflowY="auto" flex={1} pr={1} scrollbarWidth="thin">
-				{tasks !== undefined ? (
-					<For each={tasks}>{(task) => <span>{task.title}</span>}</For>
-				) : (
-					<Spinner />
-				)}
-			</VStack>
+			{tasks !== undefined && tasks.length !== 0 && (
+				<VStack
+					gap={2}
+					overflowY="auto"
+					overflowX="visible"
+					flex={1}
+					pr={1}
+					scrollbarWidth="thin"
+				>
+					{tasks !== undefined ? (
+						<For each={tasks}>
+							{(task) => <TaskCard key={task.id} task={task} />}
+						</For>
+					) : (
+						<Spinner />
+					)}
+				</VStack>
+			)}
+
+			<AddTaskButton columnID={columnID} projectUUID={projectUUID} />
 		</Box>
 	);
 }

@@ -1,7 +1,6 @@
-import { API, QueryKeys } from "../../../shared";
+import { API, QueryKeys, useApiQuery } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
-import { useApiQuery } from "../../../shared/model/use-api-query";
 
 export const useColumn = (id: integer) =>
 	useApiQuery(

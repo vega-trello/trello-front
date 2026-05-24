@@ -1,2 +1,6 @@
 export { useProject, useProjects } from "./model/use-project";
-export {} from "./model/use-project-mutation";
+export {
+	useCreateProject,
+	useDeleteProject,
+	useUpdateProject,
+} from "./model/use-project-mutation";

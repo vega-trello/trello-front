@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { API, QueryKeys } from "../../../shared";
+import { API, QueryKeys, useApiMutation } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
-import { useApiMutation } from "../../../shared/model/use-api-mutation";
 
 export const useCreateProject = () => {
 	const queryClient = useQueryClient();
