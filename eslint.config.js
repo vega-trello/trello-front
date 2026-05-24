@@ -21,7 +21,8 @@ export default defineConfig([
 		},
 		rules: {
 			"@typescript-eslint/no-empty-object-type": "off",
-			indent: ["error", "tab", { SwitchCase: 1 }],
+			"@typescript-eslint/no-explicit-any": "off",
+			indent: ["warn", "tab", { SwitchCase: 1 }],
 		},
 	},
 ]);

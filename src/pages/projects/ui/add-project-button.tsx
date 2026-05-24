@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { API, toaster } from "../../../shared";
+import { toaster } from "../../../shared";
 import {
 	Button,
 	Dialog,
@@ -10,7 +10,9 @@ import {
 	Stat,
 	Textarea,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router";
+import { useCreateProject } from "../../../entities/project/model/use-project-mutation";
+import type { CreateProject } from "../../../shared/api/openapi/components/schemas";
+import { errorMessage } from "../../../shared/model/error-message";
 
 export function AddProjectButton() {
 	const ref = useRef<HTMLInputElement | null>(null);
@@ -18,41 +20,23 @@ export function AddProjectButton() {
 	const titleSyms = Array.from(title).length.toString();
 	const [desc, setDesc] = useState("");
 	const descSyms = Array.from(desc).length.toString();
-	const navigate = useNavigate();
+
+	const createProject = useCreateProject();
 
 	const create = useCallback(async () => {
-		const res = await API.Project.Create({
-			title,
-			description: desc,
+		const data: CreateProject = { title };
+		if (desc !== "") data.description = desc;
+
+		createProject.mutate(data, {
+			onSuccess() {
+				setTitle("");
+				setDesc("");
+			},
+			onError(err) {
+				toaster.error(errorMessage(err));
+			},
 		});
-		switch (res.status) {
-			case 201: {
-				toaster.success({
-					title: "Проект создан",
-				});
-				break;
-			}
-			case 400: {
-				toaster.error({
-					title: "Ошибка запроса",
-				});
-				break;
-			}
-			case 401: {
-				toaster.error({
-					title: "Вы не авторизованы",
-				});
-				navigate("/login");
-				break;
-			}
-			case 403: {
-				toaster.error({
-					title: "Нет доступа",
-				});
-				break;
-			}
-		}
-	}, [title, desc, navigate]);
+	}, [title, desc, createProject]);
 
 	return (
 		<Dialog.Root
@@ -104,7 +88,12 @@ export function AddProjectButton() {
 								<Button variant="ghost">Отменить</Button>
 							</Dialog.ActionTrigger>
 							<Dialog.ActionTrigger asChild>
-								<Button variant="solid" type="submit" onClick={create}>
+								<Button
+									variant="solid"
+									type="submit"
+									onClick={create}
+									loading={createProject.isPending}
+								>
 									Создать
 								</Button>
 							</Dialog.ActionTrigger>

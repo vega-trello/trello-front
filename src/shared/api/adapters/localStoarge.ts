@@ -228,7 +228,7 @@ function getInitialDB(): DB {
 // ---------- Auth / Session ----------
 async function requireAuth(): Promise<
 	{ ok: true; user: DBBaseUser } | { ok: false }
-	> {
+> {
 	const token = sessionStorage.getItem("token");
 	if (!token) {
 		return { ok: false };
@@ -375,22 +375,22 @@ export const Adapter: APIAdapter = {
 			requireAuth().then((res) =>
 				res.ok
 					? prom((resolve) =>
-						withDB((db) => {
-							const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
-							const manual = db.manualUser.find(
-								(u) => u.user_uuid === res.user.uuid,
-							)!;
-							if (manual.password_hash !== req.old_password) {
-								resolve({ status: 403, ...err });
+							withDB((db) => {
+								const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
+								const manual = db.manualUser.find(
+									(u) => u.user_uuid === res.user.uuid,
+								)!;
+								if (manual.password_hash !== req.old_password) {
+									resolve({ status: 403, ...err });
+									return { db };
+								}
+								base.username = req.username;
+								manual.password_hash = req.password;
+								base.updated_at = now();
+								resolve({ status: 200, body: structuredClone(base) });
 								return { db };
-							}
-							base.username = req.username;
-							manual.password_hash = req.password;
-							base.updated_at = now();
-							resolve({ status: 200, body: structuredClone(base) });
-							return { db };
-						}),
-					)
+							}),
+						)
 					: { status: 401, ...err },
 			),
 	},
@@ -400,17 +400,17 @@ export const Adapter: APIAdapter = {
 			requireAuth().then((res) =>
 				res.ok
 					? prom((resolve) =>
-						withDB((db) => {
-							const memberProjects = db.member
-								.filter((m) => m.user_uuid === res.user.uuid)
-								.map((m) => m.project_uuid);
-							const projects = db.project.filter((p) =>
-								memberProjects.includes(p.uuid),
-							);
-							resolve({ status: 200, body: structuredClone(projects) });
-							return { db };
-						}),
-					)
+							withDB((db) => {
+								const memberProjects = db.member
+									.filter((m) => m.user_uuid === res.user.uuid)
+									.map((m) => m.project_uuid);
+								const projects = db.project.filter((p) =>
+									memberProjects.includes(p.uuid),
+								);
+								resolve({ status: 200, body: structuredClone(projects) });
+								return { db };
+							}),
+						)
 					: { status: 401, ...err },
 			),
 
@@ -418,25 +418,25 @@ export const Adapter: APIAdapter = {
 			requireAuth().then((res) =>
 				res.ok
 					? prom((resolve) =>
-						withDB((db) => {
-							const newProject: DBProject = {
-								uuid: generateUUID(),
-								title: req.title,
-								description: req.description,
-								created_at: now(),
-								updated_at: now(),
-							};
-							db.project.push(newProject);
-							db.member.push({
-								project_uuid: newProject.uuid,
-								user_uuid: res.user.uuid,
-								role_id: 1,
-								joined_at: now(),
-							});
-							resolve({ status: 201, body: structuredClone(newProject) });
-							return { db };
-						}),
-					)
+							withDB((db) => {
+								const newProject: DBProject = {
+									uuid: generateUUID(),
+									title: req.title,
+									description: req.description,
+									created_at: now(),
+									updated_at: now(),
+								};
+								db.project.push(newProject);
+								db.member.push({
+									project_uuid: newProject.uuid,
+									user_uuid: res.user.uuid,
+									role_id: 1,
+									joined_at: now(),
+								});
+								resolve({ status: 201, body: structuredClone(newProject) });
+								return { db };
+							}),
+						)
 					: { status: 401, ...err },
 			),
 
@@ -609,15 +609,14 @@ export const Adapter: APIAdapter = {
 						resolve({ status: 404 });
 						return;
 					}
-					withDB((db) => {
-						let idx: number;
-						idx = db.column.findIndex((c) => c.id === other.id);
-						db.column[idx].position = col.position;
-						idx = db.column.findIndex((c) => c.id === col.id);
-						return { db };
+					const { newCol } = withDB((db) => {
+						const cur = db.column.find((c) => c.id === col.id)!;
+						cur.position = other.position;
+						const next = db.column.find((c) => c.id === other.id)!;
+						next.position = col.position;
+						return { db, newCol: cur };
 					});
-					col.position = near;
-					resolve({ status: 200, body: col });
+					resolve({ status: 200, body: newCol });
 				}),
 
 			Delete: ({ columnID }) =>
@@ -645,7 +644,15 @@ export const Adapter: APIAdapter = {
 							return { db };
 						}
 						db.column.splice(idx, 1);
-						db.tasks = db.tasks.filter((t) => t.column_id !== columnID);
+						db.column.forEach((c) => {
+							if (c.project_uuid !== col.project_uuid) return;
+							if (c.position <= col.position) return;
+							c.position -= 1;
+						});
+						db.tasks = db.tasks.map((t) => ({
+							...t,
+							column_id: t.column_id === columnID ? undefined : t.column_id,
+						}));
 						resolve({ status: 204 });
 						return { db };
 					});
@@ -850,24 +857,24 @@ export const Adapter: APIAdapter = {
 				requireAuth().then((auth) =>
 					auth.ok
 						? requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
-							(res) => {
-								if (!res.ok) return { status: res.status, ...err };
-								return prom((resolve) =>
-									withDB((db) => {
-										const newTask: DBTask = {
-											id: nextId(db.tasks),
-											creator_uuid: auth.user.uuid,
-											title: "",
-											created_at: now(),
-											updated_at: now(),
-										};
-										db.tasks.push(newTask);
-										resolve({ status: 201, body: newTask });
-										return { db };
-									}),
-								);
-							},
-						)
+								(res) => {
+									if (!res.ok) return { status: res.status, ...err };
+									return prom((resolve) =>
+										withDB((db) => {
+											const newTask: DBTask = {
+												id: nextId(db.tasks),
+												creator_uuid: auth.user.uuid,
+												title: "",
+												created_at: now(),
+												updated_at: now(),
+											};
+											db.tasks.push(newTask);
+											resolve({ status: 201, body: newTask });
+											return { db };
+										}),
+									);
+								},
+							)
 						: { status: 401, ...err },
 				),
 

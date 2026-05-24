@@ -1,10 +1,8 @@
 import { useEffect } from "react";
 
-function Preferences() {
+export function Page() {
 	useEffect(() => {
 		document.title = `Trega | Настройки`;
 	});
 	return <>Preferences</>;
 }
-
-export default Preferences;

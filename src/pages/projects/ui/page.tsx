@@ -1,13 +1,17 @@
-import { Heading, Text } from "@chakra-ui/react";
+import { Heading, Spinner } from "@chakra-ui/react";
 import { useCallback, useEffect } from "react";
-import { useLoaderData, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import type { Project } from "../../../shared/api/openapi/components/schemas";
-import { AddProjectButton } from "./add-button";
+import { AddProjectButton } from "./add-project-button";
+import { useProjects } from "../../../entities/project";
 import "./page.css";
-import { ProjectsTable } from "../../../widgets/projects";
+import { ProjectsCards } from "../../../widgets/projects/ui/cards";
+import { useDeleteProject } from "../../../entities/project/model/use-project-mutation";
+import { ErrorAlert } from "../../../widgets/error-alert/ui/error-alert";
 
 export function Projects() {
-	const projects: Project[] | null = useLoaderData();
+	const { data: projects, isLoading, isError, error } = useProjects();
+	const deleteProject = useDeleteProject();
 	const navigate = useNavigate();
 	useEffect(() => {
 		document.title = "Trega | Проекты";
@@ -19,15 +23,24 @@ export function Projects() {
 		},
 		[navigate],
 	);
-
-	if (projects === null) return <Text>Error loading projects</Text>;
+	if (isError) return <ErrorAlert error={error} />;
+	if (isLoading) return <Spinner size="lg" />;
+	if (projects === undefined) return <></>;
+	
 	return (
 		<div id="projects">
 			<Heading size="2xl" margin="4">
 				Проекты
 			</Heading>
-			<ProjectsTable projects={projects} onSelect={onSelect} />
-			<AddProjectButton />
+			<main>
+				<ProjectsCards
+					projects={projects}
+					onSelect={onSelect}
+					onEdit={() => {}}
+					onDelete={({ uuid }) => deleteProject.mutate({ projectUUID: uuid })}
+				/>
+				<AddProjectButton />
+			</main>
 		</div>
 	);
 }

@@ -1,2 +1,2 @@
 export { useUser } from "./model/use-user";
-export { UserProvider } from "./ui/user-provider";
+export { useLogin, useLogout } from "./model/use-auth-mutations";

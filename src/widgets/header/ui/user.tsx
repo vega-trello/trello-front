@@ -1,17 +1,14 @@
 import { NavLink } from "react-router";
-import { useUser } from "../../../entities/user";
-import { useCallback } from "react";
+import { useLogout, useUser } from "../../../entities/user";
 import { Button, Menu, Portal, Text } from "@chakra-ui/react";
 import { MdAccountCircle } from "react-icons/md";
 
 export function User() {
-	const { user, logout } = useUser();
+	const { data: user } = useUser();
+	const logout = useLogout();
 
-	const quit = useCallback(async () => {
-		logout();
-	}, [logout]);
+	if (!user) return <></>;
 
-	if (user === null) return <></>;
 	return (
 		<Menu.Root positioning={{ placement: "bottom-end" }}>
 			<Menu.Trigger asChild>
@@ -27,7 +24,7 @@ export function User() {
 							<NavLink to="/preferences">Настройки</NavLink>
 						</Menu.Item>
 						<Menu.Separator />
-						<Menu.Item value="quit" onSelect={quit}>
+						<Menu.Item value="quit" onSelect={() => logout.mutate({})}>
 							Выйти
 						</Menu.Item>
 					</Menu.Content>
