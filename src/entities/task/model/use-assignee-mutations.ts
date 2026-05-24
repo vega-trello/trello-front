@@ -5,9 +5,9 @@ export const useAddAssignee = () => {
 	const queryClient = useQueryClient();
 
 	return useApiMutation(API.Project.Assignees.Create, 201, {
-		onSuccess: (_, { projectUUID, taskID }) => {
+		onSuccess: (_, { taskID }) => {
 			queryClient.invalidateQueries({
-				queryKey: QueryKeys.task(projectUUID, taskID),
+				queryKey: QueryKeys.task(taskID),
 			});
 		},
 	});
@@ -17,9 +17,9 @@ export const useRemoveAssignee = () => {
 	const queryClient = useQueryClient();
 
 	return useApiMutation(API.Project.Assignees.Delete, 204, {
-		onSuccess: (_, { projectUUID, taskID }) => {
+		onSuccess: (_, { taskID }) => {
 			queryClient.invalidateQueries({
-				queryKey: QueryKeys.task(projectUUID, taskID),
+				queryKey: QueryKeys.task(taskID),
 			});
 		},
 	});
