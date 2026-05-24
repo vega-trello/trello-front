@@ -8,6 +8,7 @@ import { Login, Register } from "./features";
 import { RequireAuth, RequireGuest } from "./middleware";
 import { HeadingProvider, ThemeProvider } from "./shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { RootRedirect } from "./widgets";
 
 const createRouter =
 	import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
@@ -25,6 +26,10 @@ const router = createRouter([
 			</QueryClientProvider>
 		),
 		children: [
+			{
+				index: true,
+				Component: RootRedirect,
+			},
 			{
 				element: <RequireGuest />,
 				children: [

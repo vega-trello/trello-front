@@ -9,3 +9,4 @@ export { TagView } from "./tag-view";
 export { StatusView } from "./status-view";
 export { MemberView } from "./member-view";
 export { RoleView } from "./role-view";
+export { RootRedirect } from "./root-redirect";
