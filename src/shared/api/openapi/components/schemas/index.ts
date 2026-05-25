@@ -34,3 +34,6 @@ export type { Role } from "./Role";
 export type { Permission } from "./Permission";
 export type { UpdateUser } from "./UpdateUser";
 export type { UpdateProject } from "./UpdateProject";
+export type { Status } from "./Status";
+export type { CreateStatus } from "./CreateStatus";
+export type { UpdateStatus } from "./UpdateStatus";

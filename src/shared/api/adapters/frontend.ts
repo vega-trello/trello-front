@@ -8,6 +8,9 @@ import type {
 import type { integer } from "../openapi/components/schemas/integer";
 import type { Member } from "../openapi/components/schemas";
 
+export const delay = (ms: number) =>
+	new Promise((resolve) => setTimeout(resolve, ms));
+
 // ---------- Types matching DBML ----------
 type DBBaseUser = {
 	uuid: UUID;
@@ -63,12 +66,12 @@ type DBColumn = {
 	created_at: Datetime;
 };
 
-// type DBStatus = {
-// 	id: integer;
-// 	project_uuid: UUID;
-// 	name: string;
-// 	created_at: Datetime;
-// };
+type DBStatus = {
+	id: integer;
+	project_uuid: UUID;
+	name: string;
+	created_at: Datetime;
+};
 
 type DBTask = {
 	id: integer;
@@ -111,6 +114,7 @@ type DB = {
 	project: DBProject[];
 	role: DBRole[];
 	permission: DBPermission[];
+	statuses: DBStatus[];
 	member: DBMember[];
 	column: DBColumn[];
 	tasks: DBTask[];
@@ -179,6 +183,7 @@ function getInitialDB(): DB {
 		baseUser: [],
 		manualUser: [],
 		project: [],
+		statuses: [],
 		role: [
 			{
 				id: 1,
@@ -229,7 +234,7 @@ function getInitialDB(): DB {
 async function requireAuth(): Promise<
 	{ ok: true; user: DBBaseUser } | { ok: false }
 > {
-	console.group('requireAuth():');
+	console.group("requireAuth():");
 	console.log("getting token...");
 	const token = sessionStorage.getItem("token");
 	console.log("got token");
@@ -313,7 +318,13 @@ export const Adapter: APIAdapter = {
 				withDB((db) => {
 					const existing = db.baseUser.find((u) => u.username === username);
 					if (existing) {
-						resolve({ status: 409, ...err });
+						resolve({
+							status: 409,
+							body: {
+								error: "Пользователь уже существует",
+								message: "Выберите другое имя пользователя",
+							},
+						});
 						return { db };
 					}
 					const userUUID = generateUUID();
@@ -869,6 +880,92 @@ export const Adapter: APIAdapter = {
 			},
 		},
 
+		Statuses: {
+			GetAll: ({ projectUUID }) =>
+				requireProjectAccess(projectUUID).then((res) => {
+					if (!res.ok) return { status: res.status, ...err };
+					return prom((resolve) =>
+						withDB((db) => {
+							console.log({
+								statuses: db.statuses.filter(
+									(s) => s.project_uuid === projectUUID,
+								),
+							});
+							resolve({
+								status: 200,
+								body: db.statuses.filter((s) => s.project_uuid === projectUUID),
+							});
+							return { db };
+						}),
+					);
+				}),
+			Create: ({ projectUUID, name }) =>
+				requireProjectAccess(projectUUID).then((res) => {
+					if (!res.ok) return { status: res.status, ...err };
+					return prom((resolve) =>
+						withDB((db) => {
+							const newStatus: DBStatus = {
+								id: nextId(db.statuses),
+								name,
+								project_uuid: projectUUID,
+								created_at: now(),
+							};
+							db.statuses.push(newStatus);
+							resolve({ status: 201, body: newStatus });
+							return { db };
+						}),
+					);
+				}),
+			Get: ({ projectUUID, statusID }) =>
+				requireProjectAccess(projectUUID).then((res) => {
+					if (!res.ok) return { status: res.status, ...err };
+					const { status } = withDB((db) => ({
+						db,
+						status: db.statuses.find(
+							(s) => s.id === statusID && s.project_uuid === projectUUID,
+						),
+					}));
+					if (status === undefined) return { status: 404, ...err };
+					return { status: 200, body: status };
+				}),
+			Update: ({ projectUUID, statusID, ...update }) =>
+				requireProjectAccess(projectUUID).then((res) => {
+					if (!res.ok) return { status: res.status, ...err };
+					const { newStatus } = withDB((db) => {
+						const status = db.statuses.find(
+							(s) => s.id === statusID && s.project_uuid === projectUUID,
+						);
+						if (status === undefined) return { db, newStatus: status };
+						status.name = update.name;
+						return { db, newStatus: status };
+					});
+					if (newStatus === undefined) return { status: 404, ...err };
+					return { status: 200, body: newStatus };
+				}),
+			Delete: ({ projectUUID, statusID }) =>
+				requireProjectAccess(projectUUID).then((res) => {
+					if (!res.ok) return { status: res.status, ...err };
+					return prom((resolve) =>
+						withDB((db) => {
+							const idx = db.statuses.findIndex(
+								(s) => s.project_uuid === projectUUID && s.id === statusID,
+							);
+							if (idx === -1) {
+								resolve({ status: 404, ...err });
+								return { db };
+							}
+							if (db.tasks.some((t) => t.status_id === statusID)) {
+								resolve({ status: 409, ...err });
+								return { db };
+							}
+							db.statuses.splice(idx, 1);
+							resolve({ status: 204 });
+							return { db };
+						}),
+					);
+				}),
+		},
+
 		// ---------- Tasks ----------
 		Tasks: {
 			GetAll: ({ projectUUID }) =>
@@ -928,7 +1025,7 @@ export const Adapter: APIAdapter = {
 
 			Update: ({ projectUUID, taskID, ...update }) =>
 				requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
-					(res) => {
+					async (res) => {
 						if (!res.ok) return { status: res.status, ...err };
 						return prom((resolve) =>
 							withDB((db) => {
@@ -1193,13 +1290,11 @@ export const Adapter: APIAdapter = {
 			GetAll: async ({ projectUUID }) => {
 				const res = await requireProjectAccess(projectUUID);
 				if (!res.ok) return { status: res.status, ...err };
-				return prom((resolve) =>
-					withDB((db) => {
-						const tags = db.tag.filter((t) => t.project_uuid === projectUUID);
-						resolve({ status: 200, body: tags });
-						return { db };
-					}),
-				);
+				const { tags } = withDB((db) => {
+					const tags = db.tag.filter((t) => t.project_uuid === projectUUID);
+					return { db, tags };
+				});
+				return { status: 200, body: tags };
 			},
 
 			Create: async ({ projectUUID, ...create }) => {

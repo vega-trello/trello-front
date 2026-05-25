@@ -181,7 +181,7 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 				>
 					{tasks !== undefined ? (
 						<For each={tasks}>
-							{(task) => <TaskCard key={task.id} task={task} />}
+							{(task) => <TaskCard key={task.id} task={task} projectUUID={projectUUID}/>}
 						</For>
 					) : (
 						<Spinner />

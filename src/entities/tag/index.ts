@@ -4,3 +4,5 @@ export {
 	useUpdateTag,
 	useDeleteTag,
 } from "./model/use-tag-mutations";
+export { ClickableTag } from "./ui/clickable-tag";
+export { FoldableTag } from "./ui/foldable-tag";

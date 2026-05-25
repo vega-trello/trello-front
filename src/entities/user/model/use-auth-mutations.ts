@@ -22,3 +22,13 @@ export const useLogout = () => {
 		},
 	});
 };
+
+export const useRegister = () => {
+	const queryClient = useQueryClient();
+
+	return useApiMutation(API.Auth.Register, 201, {
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: QueryKeys.self });
+		},
+	});
+};

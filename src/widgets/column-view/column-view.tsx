@@ -1,7 +1,7 @@
 import { For, HStack, Spinner } from "@chakra-ui/react";
 import { useColumns, Column } from "../../entities/column";
 import type { UUID } from "../../shared/api/openapi/components/schemas";
-import { ErrorAlert } from "../";
+import { ErrorAlert, Loader } from "../";
 import { AddColumnButton } from "./add-column-button";
 import { deleteDialog, renameDialog } from "../../entities/column";
 import { type PropsWithChildren } from "react";
@@ -24,8 +24,8 @@ export function ColumnView({ projectUUID }: { projectUUID: UUID }) {
 	useTitle("Доска");
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner size="lg" />;
-	if (columns === undefined) return <>Watafaq</>;
+	if (isLoading) return <Loader size="xl" />;
+	if (columns === undefined) return <>Что-то пошло не так</>;
 
 	return (
 		<HStack

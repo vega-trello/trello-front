@@ -13,5 +13,9 @@ export const QueryKeys = {
 	tags: (projectUUID: UUID) => ["project", projectUUID, "tags"] as const,
 	tag: (projectUUID: UUID, tagID: integer) =>
 		["project", projectUUID, "tag", tagID] as const,
+	statuses: (projectUUID: UUID) =>
+		["project", projectUUID, "statuses"] as const,
+	status: (projectUUID: UUID, statusID: integer) =>
+		["project", projectUUID, "status", statusID] as const,
 	taskTags: (taskID: integer) => ["task", taskID, "tags"] as const,
 };

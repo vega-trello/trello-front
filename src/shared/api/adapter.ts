@@ -35,6 +35,9 @@ import type {
 	UUID,
 	Error,
 	MoveColumn,
+	CreateStatus,
+	Status,
+	UpdateStatus,
 } from "./openapi/components/schemas";
 import type { integer } from "./openapi/components/schemas/integer";
 
@@ -218,6 +221,58 @@ export type APIAdapter = {
 				401: Unauthorized;
 				403: Forbidden;
 				404: EmptyResponse;
+			}>;
+		};
+
+		Statuses: {
+			GetAll: (
+				req: { projectUUID: UUID },
+				signal?: AbortSignal,
+			) => Responses<{
+				200: Response<Status[]>;
+				401: Unauthorized;
+				403: Forbidden;
+				404: EmptyResponse;
+			}>;
+			Create: (
+				req: { projectUUID: UUID } & CreateStatus,
+				signal?: AbortSignal,
+			) => Responses<{
+				201: Response<Status>;
+				400: BadRequest;
+				401: Unauthorized;
+				403: Forbidden;
+				404: EmptyResponse;
+				409: EmptyResponse;
+			}>;
+			Get: (
+				req: { projectUUID: UUID; statusID: integer },
+				signal?: AbortSignal,
+			) => Responses<{
+				200: Response<Status>;
+				401: Unauthorized;
+				403: Forbidden;
+				404: EmptyResponse;
+			}>;
+			Update: (
+				req: { projectUUID: UUID; statusID: integer } & UpdateStatus,
+				signal?: AbortSignal,
+			) => Responses<{
+				200: Response<Status>;
+				400: BadRequest;
+				401: Unauthorized;
+				403: Forbidden;
+				404: EmptyResponse;
+			}>;
+			Delete: (
+				req: { projectUUID: UUID; statusID: integer },
+				signal?: AbortSignal,
+			) => Responses<{
+				204: EmptyResponse;
+				401: Unauthorized;
+				403: Forbidden;
+				404: EmptyResponse;
+				409: EmptyResponse;
 			}>;
 		};
 
