@@ -88,17 +88,17 @@ export function Project() {
 							</>,
 						)}
 						{TabL(
-							"role",
-							<>
-								<MdBadge />
-								Роли
-							</>,
-						)}
-						{TabL(
 							"member",
 							<>
 								<MdAccountBox />
 								Участники
+							</>,
+						)}
+						{TabL(
+							"role",
+							<>
+								<MdBadge />
+								Роли
 							</>,
 						)}
 					</Tabs.List>
@@ -117,8 +117,8 @@ export function Project() {
 				{TabV("table", <ColumnView projectUUID={project.uuid} />)}
 				{TabV("tag", <TagView projectUUID={project.uuid} />)}
 				{TabV("status", <StatusView projectUUID={project.uuid} />)}
-				{TabV("role", <RoleView projectUUID={project.uuid} />)}
 				{TabV("member", <MemberView projectUUID={project.uuid} />)}
+				{TabV("role", <RoleView projectUUID={project.uuid} />)}
 				{TabV("archive", <ArchiveView projectUUID={project.uuid} />)}
 			</main>
 		</Tabs.Root>

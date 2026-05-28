@@ -1,4 +1,4 @@
-import { tokenStorage } from "../../tokenStorage";
+import type { HTTP } from "../../status";
 import type {
 	ColumnID,
 	ProjectUUID,
@@ -7,6 +7,7 @@ import type {
 	TaskID,
 	UserUUID,
 } from "../components/parameters";
+import type { StatusID } from "../components/parameters/parameters";
 import type {
 	BadRequest,
 	Unauthorized,
@@ -41,6 +42,9 @@ import type {
 	Permission,
 	User,
 	Error,
+	Status,
+	CreateStatus,
+	UpdateStatus,
 } from "../components/schemas";
 import type { CreateColumn } from "../components/schemas/CreateColumn";
 import { DELETE, GET, PATCH, POST } from "./rest";
@@ -51,50 +55,48 @@ export const AuthRegister = POST<
 	[],
 	{ username: Username; password: Password },
 	{
-		201: Response<User>;
-		400: BadRequest;
-		409: Response<Error>;
+		[HTTP.Created]: Response<User>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Conflict]: Response<Error>;
 	}
 >("/auth/register");
 
-const _Login = POST<
+export const AuthLogin = POST<
 	[],
 	{ username: Username; password: Password },
 	{
-		200: Response<{ token: string }>;
-		401: Unauthorized;
+		[HTTP.OK]: Response<{ token: string }>;
+		[HTTP.Unauthorized]: Unauthorized;
 	}
 >("/auth/login");
-
-export const AuthLogin = (
-	username: Username,
-	password: Password,
-	signal?: AbortSignal,
-) => {
-	return _Login({}, {}, { username, password }, signal).then((res) => {
-		if (res.status === 200) {
-			tokenStorage.set(res.body.token);
-		}
-		return res;
-	});
-};
 
 export const AuthLogout = POST<
 	[],
 	{},
 	{
-		200: EmptyResponse;
-		401: Unauthorized;
+		[HTTP.OK]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
 	}
 >("/auth/logout");
+
+export const AuthExchange = POST<
+	[],
+	{ token: string },
+	{
+		[HTTP.OK]: Response<{ token: string }>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+	}
+>("/auth/sso/exchange");
 
 /* ---------------------------------- Self ---------------------------------- */
 
 export const SelfGet = GET<
 	[],
 	{
-		200: Response<SelfUser>;
-		401: Unauthorized;
+		[HTTP.OK]: Response<SelfUser>;
+		[HTTP.Unauthorized]: Unauthorized;
 	}
 >("/self");
 
@@ -102,10 +104,11 @@ export const SelfUpdate = PATCH<
 	[],
 	UpdateUser,
 	{
-		200: Response<SelfUser>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
+		[HTTP.OK]: Response<SelfUser>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.Conflict]: Response<Error>;
 	}
 >("/self");
 
@@ -113,9 +116,9 @@ export const SelfUpdate = PATCH<
 export const UserGet = GET<
 	[UserUUID],
 	{
-		200: Response<User>;
-		401: Unauthorized;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<User>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/user");
 
@@ -124,9 +127,9 @@ export const UserGet = GET<
 export const ProjectGetAll = GET<
 	[],
 	{
-		200: Response<Project[]>;
-		401: Unauthorized;
-		403: Forbidden;
+		[HTTP.OK]: Response<Project[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
 	}
 >("/projects");
 
@@ -134,20 +137,20 @@ export const ProjectCreate = POST<
 	[],
 	CreateProject,
 	{
-		201: Response<Project>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
+		[HTTP.Created]: Response<Project>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
 	}
 >("/projects");
 
 export const ProjectGet = GET<
 	[ProjectUUID],
 	{
-		200: Response<Project>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Project>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}");
 
@@ -155,33 +158,87 @@ export const ProjectUpdate = PATCH<
 	[ProjectUUID],
 	UpdateProject,
 	{
-		200: Response<Project>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Project>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}");
 
 export const ProjectDelete = DELETE<
 	[ProjectUUID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}");
+
+/* -------------------------------- Statuses -------------------------------- */
+
+export const StatusesGetAll = GET<
+	[ProjectUUID],
+	{
+		[HTTP.OK]: Response<Status[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/statuses");
+export const StatusesCreate = POST<
+	[ProjectUUID],
+	CreateStatus,
+	{
+		[HTTP.Created]: Response<Status>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/statuses");
+export const StatusesGet = GET<
+	[ProjectUUID, StatusID],
+	{
+		[HTTP.OK]: Response<Status>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/statuses/{statusID}");
+export const StatusesUpdate = PATCH<
+	[ProjectUUID, StatusID],
+	UpdateStatus,
+	{
+		[HTTP.OK]: Response<Status>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/statuses/{statusID}");
+export const StatusesDelete = DELETE<
+	[ProjectUUID, StatusID],
+	{
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/statuses/{statusID}");
 
 /* --------------------------------- Columns -------------------------------- */
 
 export const ColumnGetAll = GET<
 	[ProjectUUID],
 	{
-		200: Response<Column[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Column[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/columns");
 
@@ -189,21 +246,21 @@ export const ColumnCreate = POST<
 	[ProjectUUID],
 	CreateColumn,
 	{
-		201: Response<Column>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.Created]: Response<Column>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/columns");
 
 export const ColumnGet = GET<
 	[ColumnID],
 	{
-		200: Response<Column>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Column>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/columns/{columnID}");
 
@@ -211,11 +268,11 @@ export const ColumnUpdate = PATCH<
 	[ColumnID],
 	UpdateColumn,
 	{
-		200: Response<Column>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Column>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/columns/{columnID}");
 
@@ -223,21 +280,21 @@ export const ColumnMove = POST<
 	[ColumnID],
 	MoveColumn,
 	{
-		200: Response<Column>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Column>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/columns/{columnID}/move");
 
 export const ColumnDelete = DELETE<
 	[ColumnID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/columns/{columnID}");
 
@@ -246,10 +303,10 @@ export const ColumnDelete = DELETE<
 export const MemberGetAll = GET<
 	[ProjectUUID],
 	{
-		200: Response<Member[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Member[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/members");
 
@@ -257,22 +314,22 @@ export const MemberCreate = POST<
 	[ProjectUUID],
 	CreateMember,
 	{
-		201: Response<Member>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
-		409: EmptyResponse;
+		[HTTP.Created]: Response<Member>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/members");
 
 export const MemberGet = GET<
 	[ProjectUUID, UserUUID],
 	{
-		200: Response<Member>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Member>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/member");
 
@@ -280,21 +337,21 @@ export const MemberUpdate = PATCH<
 	[ProjectUUID, UserUUID],
 	UpdateMember,
 	{
-		200: Response<Member>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Member>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/member");
 
 export const MemberDelete = DELETE<
 	[ProjectUUID, UserUUID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/member");
 
@@ -303,10 +360,10 @@ export const MemberDelete = DELETE<
 export const TaskGetAll = GET<
 	[ProjectUUID],
 	{
-		200: Response<Task[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Task[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tasks");
 
@@ -314,21 +371,21 @@ export const TaskCreate = POST<
 	[ProjectUUID],
 	CreateTask,
 	{
-		201: Response<Task>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.Created]: Response<Task>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tasks");
 
 export const TaskGet = GET<
 	[ProjectUUID, TaskID],
 	{
-		200: Response<Task>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Task>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task");
 
@@ -336,55 +393,55 @@ export const TaskUpdate = PATCH<
 	[ProjectUUID, TaskID],
 	UpdateTask,
 	{
-		200: Response<Task>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Task>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task");
 
 export const TaskDelete = DELETE<
 	[ProjectUUID, TaskID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task");
 
 /* ------------------------------- Task Tags -------------------------------- */
 
 export const TaskTagGetAll = GET<
-	[TaskID],
+	[ProjectUUID, TaskID],
 	{
-		200: Response<Tag[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Tag[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task/tags");
 
 export const TaskTagCreate = POST<
-	[TaskID, TagID],
+	[ProjectUUID, TaskID, TagID],
 	{},
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
-		409: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task/tags");
 
 export const TaskTagDelete = DELETE<
-	[TaskID, TagID],
+	[ProjectUUID, TaskID, TagID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task/tags");
 
@@ -393,10 +450,10 @@ export const TaskTagDelete = DELETE<
 export const AssigneeGetAll = GET<
 	[ProjectUUID, TaskID],
 	{
-		200: Response<Assignee[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Assignee[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/assignees");
 
@@ -404,22 +461,22 @@ export const AssigneeCreate = POST<
 	[ProjectUUID, TaskID],
 	CreateAssignee,
 	{
-		201: Response<Assignee>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
-		409: EmptyResponse;
+		[HTTP.Created]: Response<Assignee>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/assignees");
 
 export const AssigneeDelete = DELETE<
 	[ProjectUUID, TaskID, UserUUID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/assignee");
 
@@ -428,10 +485,10 @@ export const AssigneeDelete = DELETE<
 export const TagGetAll = GET<
 	[ProjectUUID],
 	{
-		200: Response<Tag[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Tag[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tag");
 
@@ -439,11 +496,11 @@ export const TagCreate = POST<
 	[ProjectUUID],
 	CreateTag,
 	{
-		201: Response<Tag>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.Created]: Response<Tag>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tag");
 
@@ -451,21 +508,21 @@ export const TagUpdate = PATCH<
 	[ProjectUUID, TagID],
 	UpdateTag,
 	{
-		200: Response<Tag>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Tag>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tag");
 
 export const TagDelete = DELETE<
 	[ProjectUUID, TagID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/tag");
 
@@ -474,9 +531,9 @@ export const TagDelete = DELETE<
 export const RoleGetAll = GET<
 	[ProjectUUID],
 	{
-		200: Response<Role[]>;
-		401: Unauthorized;
-		403: Forbidden;
+		[HTTP.OK]: Response<Role[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
 	}
 >("/projects/{projectUUID}/roles");
 
@@ -484,20 +541,20 @@ export const RoleCreate = POST<
 	[ProjectUUID],
 	CreateRole,
 	{
-		201: Response<Role>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
+		[HTTP.Created]: Response<Role>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
 	}
 >("/projects/{projectUUID}/roles");
 
 export const RoleGet = GET<
 	[ProjectUUID, RoleID],
 	{
-		200: Response<Role>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Role>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/roles/{roleID}");
 
@@ -505,31 +562,31 @@ export const RoleUpdate = PATCH<
 	[ProjectUUID, RoleID],
 	UpdateRole,
 	{
-		200: Response<Role>;
-		400: BadRequest;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Role>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/roles/{roleID}");
 
 export const RoleDelete = DELETE<
 	[ProjectUUID, RoleID],
 	{
-		204: EmptyResponse;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
-		409: EmptyResponse;
+		[HTTP.NoContent]: EmptyResponse;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+		[HTTP.Conflict]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/roles/{roleID}");
 
 export const RolePermissionGetAll = GET<
 	[ProjectUUID, RoleID],
 	{
-		200: Response<Permission[]>;
-		401: Unauthorized;
-		403: Forbidden;
-		404: EmptyResponse;
+		[HTTP.OK]: Response<Permission[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/roles/{roleID}/permissions");

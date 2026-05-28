@@ -1,5 +1,7 @@
 import { Button, Text } from "@chakra-ui/react";
 import type { Tag } from "../../../shared/api/openapi/components/schemas";
+import { useMemo } from "react";
+import { getTextColor } from "../../../shared/model/get-text-color";
 
 export type ClickableTagProps = {
 	tag: Tag;
@@ -7,10 +9,13 @@ export type ClickableTagProps = {
 };
 
 export function ClickableTag({ tag, callback }: ClickableTagProps) {
+	const color = useMemo(() => {
+		return getTextColor(tag.color);
+	}, [tag.color]);
+
 	return (
 		<Button
 			onClick={callback}
-			color="innvert"
 			bg={tag.color}
 			size="md"
 			rounded="full"
@@ -20,7 +25,7 @@ export function ClickableTag({ tag, callback }: ClickableTagProps) {
 			height="auto"
 			_hover={{ cursor: "pointer" }}
 		>
-			<Text mixBlendMode="difference" color="white">
+			<Text color={color} opacity={0.75}>
 				{tag.name}
 			</Text>
 		</Button>

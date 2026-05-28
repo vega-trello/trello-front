@@ -6,10 +6,6 @@ import { useEffect } from "react";
 export function RequireGuest() {
 	const { data: user, isLoading } = useSelf();
 
-	useEffect(() => {
-		console.log(user, isLoading);
-	}, [user, isLoading]);
-
 	if (isLoading) return <Spinner />;
 	if (user) return <Navigate to="/projects" replace />;
 	return <Outlet />;

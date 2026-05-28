@@ -40,6 +40,7 @@ import type {
 	UpdateStatus,
 } from "./openapi/components/schemas";
 import type { integer } from "./openapi/components/schemas/integer";
+import type { HTTP } from "./status";
 
 type Responses<T extends { [K in number]: Response<unknown> }> = Promise<
 	{
@@ -55,25 +56,35 @@ export type APIAdapter = {
 			req: { username: Username; password: Password },
 			signal?: AbortSignal,
 		) => Responses<{
-			201: Response<User>;
-			400: BadRequest;
-			409: Response<Error>;
+			[HTTP.Created]: Response<User>;
+			[HTTP.BadRequest]: BadRequest;
+			[HTTP.Conflict]: Response<Error>;
 		}>;
 
 		Login: (
 			req: { username: Username; password: Password },
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<{ token: string }>;
-			401: Unauthorized;
+			[HTTP.OK]: Response<{ token: string }>;
+			[HTTP.Unauthorized]: Unauthorized;
 		}>;
 
 		Logout: (
 			req: {},
 			signal?: AbortSignal,
 		) => Responses<{
-			200: EmptyResponse;
-			401: Unauthorized;
+			[HTTP.OK]: EmptyResponse;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
+		}>;
+
+		Exchange: (
+			req: { token: string },
+			signal?: AbortSignal,
+		) => Responses<{
+			[HTTP.OK]: Response<{ token: string }>;
+			[HTTP.BadRequest]: BadRequest;
+			[HTTP.Unauthorized]: Unauthorized;
 		}>;
 	};
 
@@ -82,18 +93,19 @@ export type APIAdapter = {
 			req: {},
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<SelfUser>;
-			401: Unauthorized;
+			[HTTP.OK]: Response<SelfUser>;
+			[HTTP.Unauthorized]: Unauthorized;
 		}>;
 
 		Update: (
 			req: UpdateUser,
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<SelfUser>;
-			400: BadRequest;
-			401: Unauthorized;
-			403: Forbidden;
+			[HTTP.OK]: Response<SelfUser>;
+			[HTTP.BadRequest]: BadRequest;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
+			[HTTP.Conflict]: Response<Error>;
 		}>;
 	};
 
@@ -102,9 +114,9 @@ export type APIAdapter = {
 			req: { userUUID: UUID },
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<User>;
-			401: Unauthorized;
-			404: EmptyResponse;
+			[HTTP.OK]: Response<User>;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.NotFound]: EmptyResponse;
 		}>;
 	};
 
@@ -113,50 +125,50 @@ export type APIAdapter = {
 			req: {},
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<Project[]>;
-			401: Unauthorized;
-			403: Forbidden;
+			[HTTP.OK]: Response<Project[]>;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
 		}>;
 
 		Create: (
 			req: CreateProject,
 			signal?: AbortSignal,
 		) => Responses<{
-			201: Response<Project>;
-			400: BadRequest;
-			401: Unauthorized;
-			403: Forbidden;
+			[HTTP.Created]: Response<Project>;
+			[HTTP.BadRequest]: BadRequest;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
 		}>;
 
 		Get: (
 			req: { projectUUID: UUID },
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<Project>;
-			401: Unauthorized;
-			403: Forbidden;
-			404: EmptyResponse;
+			[HTTP.OK]: Response<Project>;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
+			[HTTP.NotFound]: EmptyResponse;
 		}>;
 
 		Update: (
 			req: { projectUUID: UUID } & UpdateProject,
 			signal?: AbortSignal,
 		) => Responses<{
-			200: Response<Project>;
-			400: BadRequest;
-			401: Unauthorized;
-			403: Forbidden;
-			404: EmptyResponse;
+			[HTTP.OK]: Response<Project>;
+			[HTTP.BadRequest]: BadRequest;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
+			[HTTP.NotFound]: EmptyResponse;
 		}>;
 
 		Delete: (
 			req: { projectUUID: UUID },
 			signal?: AbortSignal,
 		) => Responses<{
-			204: EmptyResponse;
-			401: Unauthorized;
-			403: Forbidden;
-			404: EmptyResponse;
+			[HTTP.NoContent]: EmptyResponse;
+			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
+			[HTTP.NotFound]: EmptyResponse;
 		}>;
 
 		Columns: {
@@ -164,63 +176,63 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Column[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Column[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID } & CreateColumn,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Column>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.Created]: Response<Column>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Get: (
 				req: { columnID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Column>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Column>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Update: (
 				req: { columnID: integer } & UpdateColumn,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Column>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Column>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Move: (
 				req: { columnID: integer } & MoveColumn,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Column>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Column>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Delete: (
 				req: { columnID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 		};
 
@@ -229,50 +241,50 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Status[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Status[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 			Create: (
 				req: { projectUUID: UUID } & CreateStatus,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Status>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
-				409: EmptyResponse;
+				[HTTP.Created]: Response<Status>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+				[HTTP.Conflict]: EmptyResponse;
 			}>;
 			Get: (
 				req: { projectUUID: UUID; statusID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Status>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Status>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 			Update: (
 				req: { projectUUID: UUID; statusID: integer } & UpdateStatus,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Status>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Status>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 			Delete: (
 				req: { projectUUID: UUID; statusID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
-				409: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+				[HTTP.Conflict]: EmptyResponse;
 			}>;
 		};
 
@@ -281,53 +293,53 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Member[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Member[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID } & CreateMember,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Member>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
-				409: EmptyResponse;
+				[HTTP.Created]: Response<Member>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+				[HTTP.Conflict]: EmptyResponse;
 			}>;
 
 			Get: (
 				req: { projectUUID: UUID; userUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Member>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Member>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Update: (
 				req: { projectUUID: UUID; userUUID: UUID } & UpdateMember,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Member>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Member>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Delete: (
 				req: { projectUUID: UUID; userUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 		};
 
@@ -336,87 +348,88 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Task[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Task[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID } & CreateTask,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Task>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.Created]: Response<Task>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Get: (
 				req: { projectUUID: UUID; taskID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Task>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Task>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Update: (
 				req: { projectUUID: UUID; taskID: integer } & UpdateTask,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Task>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Task>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Delete: (
 				req: { projectUUID: UUID; taskID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Tags: {
 				GetAll: (
-					req: { taskID: integer },
+					req: { projectUUID: UUID; taskID: integer },
 					signal?: AbortSignal,
 				) => Responses<{
-					200: Response<Tag[]>;
-					401: Unauthorized;
-					403: Forbidden;
-					404: EmptyResponse;
+					[HTTP.OK]: Response<Tag[]>;
+					[HTTP.Unauthorized]: Unauthorized;
+					[HTTP.Forbidden]: Forbidden;
+					[HTTP.NotFound]: EmptyResponse;
 				}>;
 
 				Create: (
-					req: { taskID: integer; tagID: integer },
+					req: { projectUUID: UUID; taskID: integer; tagID: integer },
 					signal?: AbortSignal,
 				) => Responses<{
-					204: EmptyResponse;
-					401: Unauthorized;
-					403: Forbidden;
-					404: EmptyResponse;
-					409: EmptyResponse;
+					[HTTP.NoContent]: EmptyResponse;
+					[HTTP.Unauthorized]: Unauthorized;
+					[HTTP.Forbidden]: Forbidden;
+					[HTTP.NotFound]: EmptyResponse;
+					[HTTP.Conflict]: EmptyResponse;
 				}>;
 
 				Delete: (
 					req: {
+						projectUUID: UUID;
 						taskID: integer;
 						tagID: integer;
 					},
 					signal?: AbortSignal,
 				) => Responses<{
-					204: EmptyResponse;
-					401: Unauthorized;
-					403: Forbidden;
-					404: EmptyResponse;
+					[HTTP.NoContent]: EmptyResponse;
+					[HTTP.Unauthorized]: Unauthorized;
+					[HTTP.Forbidden]: Forbidden;
+					[HTTP.NotFound]: EmptyResponse;
 				}>;
 			};
 		};
@@ -426,22 +439,22 @@ export type APIAdapter = {
 				req: { projectUUID: UUID; taskID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Assignee[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Assignee[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID; taskID: integer } & CreateAssignee,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Assignee>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
-				409: EmptyResponse;
+				[HTTP.Created]: Response<Assignee>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+				[HTTP.Conflict]: EmptyResponse;
 			}>;
 
 			Delete: (
@@ -452,10 +465,10 @@ export type APIAdapter = {
 				},
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 		};
 
@@ -464,42 +477,42 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Tag[]>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Tag[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID } & CreateTag,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Tag>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.Created]: Response<Tag>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Update: (
 				req: { projectUUID: UUID; tagID: integer } & UpdateTag,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Tag>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Tag>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Delete: (
 				req: { projectUUID: UUID; tagID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 		};
 
@@ -508,51 +521,51 @@ export type APIAdapter = {
 				req: { projectUUID: UUID },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Role[]>;
-				401: Unauthorized;
-				403: Forbidden;
+				[HTTP.OK]: Response<Role[]>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
 			}>;
 
 			Create: (
 				req: { projectUUID: UUID } & CreateRole,
 				signal?: AbortSignal,
 			) => Responses<{
-				201: Response<Role>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
+				[HTTP.Created]: Response<Role>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
 			}>;
 
 			Get: (
 				req: { projectUUID: UUID; roleID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Role>;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Role>;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Update: (
 				req: { projectUUID: UUID; roleID: integer } & UpdateRole,
 				signal?: AbortSignal,
 			) => Responses<{
-				200: Response<Role>;
-				400: BadRequest;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
+				[HTTP.OK]: Response<Role>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
 			Delete: (
 				req: { projectUUID: UUID; roleID: integer },
 				signal?: AbortSignal,
 			) => Responses<{
-				204: EmptyResponse;
-				401: Unauthorized;
-				403: Forbidden;
-				404: EmptyResponse;
-				409: EmptyResponse;
+				[HTTP.NoContent]: EmptyResponse;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+				[HTTP.Conflict]: EmptyResponse;
 			}>;
 
 			Permissions: {
@@ -560,10 +573,10 @@ export type APIAdapter = {
 					req: { projectUUID: UUID; roleID: integer },
 					signal?: AbortSignal,
 				) => Responses<{
-					200: Response<Permission[]>;
-					401: Unauthorized;
-					403: Forbidden;
-					404: EmptyResponse;
+					[HTTP.OK]: Response<Permission[]>;
+					[HTTP.Unauthorized]: Unauthorized;
+					[HTTP.Forbidden]: Forbidden;
+					[HTTP.NotFound]: EmptyResponse;
 				}>;
 			};
 		};

@@ -68,6 +68,7 @@ export const PasswordInput = React.forwardRef<
 		<InputGroup
 			endElement={
 				<VisibilityTrigger
+					title={visible ? "Скрыть" : "Показать"}
 					disabled={rest.disabled}
 					onPointerDown={(e) => {
 						if (rest.disabled) return;
@@ -94,6 +95,7 @@ const VisibilityTrigger = React.forwardRef<HTMLButtonElement, ButtonProps>(
 	function VisibilityTrigger(props, ref) {
 		return (
 			<IconButton
+				title="Показать"
 				tabIndex={-1}
 				ref={ref}
 				me="-2"

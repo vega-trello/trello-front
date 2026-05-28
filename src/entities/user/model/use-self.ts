@@ -1,9 +1,10 @@
 import { API, QueryKeys, useApiQuery } from "../../../shared";
+import { HTTP } from "../../../shared/api/status";
 
 export const useSelf = () =>
 	useApiQuery(
 		API.Self.Get,
-		200,
+		HTTP.OK,
 		{},
 		{
 			retry: 0,

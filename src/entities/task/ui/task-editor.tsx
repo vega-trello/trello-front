@@ -3,28 +3,32 @@ import {
 	Button,
 	Checkbox,
 	DataList,
-	DatePicker,
 	Dialog,
 	For,
+	IconButton,
 	Input,
-	parseDate,
-	Popover,
 	Portal,
 	Text,
 	Textarea,
 } from "@chakra-ui/react";
 import type {
-	Tag as _Tag,
+	Tag,
+	Assignee,
 	Task,
 	UUID,
 } from "../../../shared/api/openapi/components/schemas";
-import { useCallback, useState, type PropsWithChildren } from "react";
+import { useCallback, useRef, useState, type PropsWithChildren } from "react";
 import { HiOutlineMenuAlt2, HiOutlineTag } from "react-icons/hi";
 import { useAttachTag, useDetachTag, useUpdateTask } from "../";
 import { toaster, errorMessage } from "../../../shared";
 import { useUser } from "../../user";
-import { ClickableTag, useTags } from "../../tag";
-import { LuCalendar } from "react-icons/lu";
+import { ClickableTag } from "../../tag";
+import { StatusSelect } from "./status-select";
+import { DatetimePicker } from "./datetime-picker";
+import { AddTagPopover } from "./add-tag-popover";
+import { AssigneesView } from "./assignees-view";
+import { MdAdd } from "react-icons/md";
+import { useAddAssignee, useRemoveAssignee } from "../../assignee";
 
 function Item(label: React.ReactNode, value: React.ReactNode) {
 	return (
@@ -39,165 +43,64 @@ function textOrNull(s: string | undefined) {
 	return s === undefined || s.trim().length === 0 ? null : s.trim();
 }
 
-type AddTagPopoverProps = {
+export type TaskEditorProps = {
+	task: Task;
+	tags: Tag[];
 	projectUUID: UUID;
-	tags: _Tag[];
-	setTags: React.Dispatch<React.SetStateAction<_Tag[]>>;
-};
-
-function AddTagPopover({
-	projectUUID,
-	tags,
-	setTags,
-	children,
-}: AddTagPopoverProps & PropsWithChildren) {
-	const tagIds = new Set(tags.map((t) => t.id));
-	const { data: allTags } = useTags(projectUUID);
-	const tagsToAdd = allTags?.filter((t) => !tagIds.has(t.id));
-	const [search, setSearch] = useState("");
-
-	return (
-		<Popover.Root size="sm">
-			<Popover.Trigger asChild>{children}</Popover.Trigger>
-			<Portal>
-				<Popover.Positioner>
-					<Popover.Content>
-						<Popover.Arrow />
-						<Popover.Body>
-							<Input
-								placeholder="Найти тэг"
-								size="sm"
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
-								mb="2"
-							/>
-							<Box display="flex" gap="1" flexWrap="wrap">
-								<For
-									each={tagsToAdd?.filter((t) =>
-										t.name.toLowerCase().includes(search.toLowerCase()),
-									)}
-								>
-									{(tag) => (
-										<ClickableTag
-											key={tag.id}
-											tag={tag}
-											callback={() => setTags((t) => [...t, tag])}
-										/>
-									)}
-								</For>
-							</Box>
-						</Popover.Body>
-					</Popover.Content>
-				</Popover.Positioner>
-			</Portal>
-		</Popover.Root>
-	);
-}
-
-function DatetimePicker({
-	value,
-	setValue,
-}: {
-	value: string | undefined;
-	setValue: (v: string | undefined) => void;
-}) {
-	const parsed = value ? [parseDate(value.split("T")[0])] : [];
-
-	return (
-		<DatePicker.Root
-			locale="ru-RU"
-			value={parsed}
-			onValueChange={(e) => {
-				if (e.value.length === 0) {
-					setValue(undefined);
-				} else {
-					setValue(
-						e.value[0]
-							.toDate("UTC")
-							.toISOString()
-							.replace(/\.\d{3}Z$/, "Z"),
-					);
-				}
-			}}
-		>
-			<DatePicker.Control>
-				<DatePicker.Input />
-				<DatePicker.IndicatorGroup>
-					<DatePicker.Context>
-						{(context) =>
-							context.value.length > 0 ? (
-								<DatePicker.ClearTrigger />
-							) : (
-								<DatePicker.Trigger>
-									<LuCalendar />
-								</DatePicker.Trigger>
-							)
-						}
-					</DatePicker.Context>
-				</DatePicker.IndicatorGroup>
-			</DatePicker.Control>
-			<Portal>
-				<DatePicker.Positioner>
-					<DatePicker.Content>
-						<DatePicker.View view="day">
-							<DatePicker.Header />
-							<DatePicker.DayTable />
-						</DatePicker.View>
-						<DatePicker.View view="month">
-							<DatePicker.Header />
-							<DatePicker.MonthTable />
-						</DatePicker.View>
-						<DatePicker.View view="year">
-							<DatePicker.Header />
-							<DatePicker.YearTable />
-						</DatePicker.View>
-					</DatePicker.Content>
-				</DatePicker.Positioner>
-			</Portal>
-		</DatePicker.Root>
-	);
-}
+	assignees: Assignee[];
+} & PropsWithChildren;
 
 export function TaskEditor({
 	task: _task,
 	tags: _tags,
+	assignees: _assignees,
 	projectUUID,
 	children,
-}: {
-	task: Task;
-	tags: _Tag[];
-	projectUUID: UUID;
-} & PropsWithChildren) {
+}: TaskEditorProps) {
 	const [open, setOpen] = useState(false);
-	const [tags, setTags] = useState<_Tag[]>(_tags);
+	const [tags, setTags] = useState<Tag[]>(_tags);
 	const [task, setTask] = useState<Task>(_task);
+	const [assigneesUUIDs, setAssigneesUUIDs] = useState<UUID[]>(
+		_assignees.map((a) => a.user_uuid),
+	);
+	const titleRef = useRef<HTMLInputElement | null>(null);
+	const descRef = useRef<HTMLTextAreaElement | null>(null);
 	const { data: user } = useUser(task.creator_uuid);
 	const [archived, setArchived] = useState(task.archived_at !== undefined);
 	const updateTask = useUpdateTask();
 	const attachTag = useAttachTag();
 	const detachTag = useDetachTag();
+	const addAssignee = useAddAssignee();
+	const removeAssignee = useRemoveAssignee();
 
 	const pending =
-		updateTask.isPending || attachTag.isPending || detachTag.isPending;
+		updateTask.isPending ||
+		attachTag.isPending ||
+		detachTag.isPending ||
+		addAssignee.isPending ||
+		removeAssignee.isPending;
 
 	const handleOpenChange = useCallback(
 		(e: { open: boolean }) => {
 			if (e.open) {
 				setTask(_task);
+				setTags(_tags);
+				setAssigneesUUIDs(_assignees.map((a) => a.user_uuid));
 				setArchived(_task.archived_at !== undefined);
 			}
 			setOpen(e.open);
 		},
-		[_task],
+		[_task, _tags, _assignees],
 	);
 
-	const update = useCallback(() => {
-		updateTask.mutate(
+	const update = useCallback(async () => {
+		await updateTask.mutateAsync(
 			{
 				projectUUID: projectUUID!,
 				taskID: task.id,
-				title: textOrNull(task.title),
-				description: textOrNull(task.description),
+				title: textOrNull(titleRef.current?.value),
+				status_id: task.status_id ?? null,
+				description: textOrNull(descRef.current?.value),
 				column_id: task.column_id,
 				start_date: task.start_date ?? null,
 				end_date: task.end_date ?? null,
@@ -205,25 +108,76 @@ export function TaskEditor({
 			},
 			{
 				onSuccess: () => setOpen(false),
-				onError: (err) => toaster.error(errorMessage(err)),
+				onError: (err) => {
+					toaster.error(errorMessage(err));
+				},
 			},
 		);
-		const tagIDs = new Set(tags.map((t) => t.id));
-		const initialTagIDs = new Set(_tags?.map((t) => t.id) ?? []);
-		const toAdd = [...tagIDs].filter((id) => !initialTagIDs.has(id));
-		const toDelete = [...initialTagIDs].filter((id) => !tagIDs.has(id));
-		toAdd.forEach((tagID) =>
-			attachTag.mutate(
-				{ taskID: task.id, tagID },
-				{ onError: (err) => toaster.error(errorMessage(err)) },
-			),
-		);
-		toDelete.forEach((tagID) =>
-			detachTag.mutate(
-				{ taskID: task.id, tagID },
-				{ onError: (err) => toaster.error(errorMessage(err)) },
-			),
-		);
+
+		{
+			const tagIDs = new Set(tags.map((t) => t.id));
+			const initialTagIDs = new Set(_tags?.map((t) => t.id) ?? []);
+			const toAdd = [...tagIDs].filter((id) => !initialTagIDs.has(id));
+			const toDelete = [...initialTagIDs].filter((id) => !tagIDs.has(id));
+			await Promise.all(
+				toAdd.map((tagID) =>
+					attachTag.mutateAsync(
+						{ projectUUID, taskID: task.id, tagID },
+						{
+							onError: (err) => {
+								toaster.error(errorMessage(err));
+							},
+						},
+					),
+				),
+			);
+			await Promise.all(
+				toDelete.map((tagID) =>
+					detachTag.mutateAsync(
+						{ projectUUID, taskID: task.id, tagID },
+						{
+							onError: (err) => {
+								toaster.error(errorMessage(err));
+							},
+						},
+					),
+				),
+			);
+		}
+		{
+			const initialUUIDs = new Set(_assignees?.map((a) => a.user_uuid));
+			const currentUUIDs = new Set(assigneesUUIDs);
+			const toAdd = assigneesUUIDs.filter((u) => !initialUUIDs.has(u));
+			const toRemove = [...initialUUIDs].filter((u) => !currentUUIDs.has(u));
+			await Promise.all(
+				toAdd.map((uuid) =>
+					addAssignee.mutateAsync(
+						{
+							projectUUID,
+							taskID: task.id,
+							user_uuid: uuid,
+						},
+						{
+							onError: (err) => toaster.error(errorMessage(err)),
+						},
+					),
+				),
+			);
+			await Promise.all(
+				toRemove.map((uuid) =>
+					removeAssignee.mutateAsync(
+						{
+							projectUUID,
+							taskID: task.id,
+							userUUID: uuid,
+						},
+						{
+							onError: (err) => toaster.error(errorMessage(err)),
+						},
+					),
+				),
+			);
+		}
 	}, [
 		updateTask,
 		task,
@@ -233,10 +187,15 @@ export function TaskEditor({
 		attachTag,
 		detachTag,
 		_tags,
+		_assignees,
+		assigneesUUIDs,
+		addAssignee,
+		removeAssignee,
 	]);
 
 	return (
 		<Dialog.Root
+			key={_task.id}
 			motionPreset="slide-in-bottom"
 			open={open}
 			onOpenChange={handleOpenChange}
@@ -254,14 +213,9 @@ export function TaskEditor({
 									<></>,
 									<Input
 										variant="flushed"
-										value={task.title}
+										defaultValue={_task.title}
 										size="xl"
-										onChange={(e) =>
-											setTask((data) => ({
-												...data,
-												title: e.target.value,
-											}))
-										}
+										ref={titleRef}
 									/>,
 								)}
 								{Item(
@@ -285,13 +239,36 @@ export function TaskEditor({
 											tags={tags}
 											setTags={setTags}
 										>
-											<Button variant="outline" size="sm">
-												+
-											</Button>
+											<IconButton variant="outline" size="sm">
+												<MdAdd />
+											</IconButton>
 										</AddTagPopover>
 									</Box>,
 								)}
+								{Item(
+									"Статус",
+									<StatusSelect
+										projectUUID={projectUUID}
+										value={task.status_id?.toString()}
+										setValue={(v) =>
+											setTask((t) => {
+												return {
+													...t,
+													status_id: v === undefined ? undefined : parseInt(v),
+												};
+											})
+										}
+									/>,
+								)}
 								{Item("Создал", <Text>{user?.username}</Text>)}
+								{Item(
+									"Участники",
+									<AssigneesView
+										projectUUID={projectUUID}
+										value={assigneesUUIDs}
+										setValue={setAssigneesUUIDs}
+									/>,
+								)}
 								{Item(
 									"Начало",
 									<DatetimePicker
@@ -310,18 +287,7 @@ export function TaskEditor({
 									<>
 										<HiOutlineMenuAlt2 /> Описание
 									</>,
-									<Textarea
-										value={task.description}
-										onChange={(e) =>
-											setTask((data) => ({
-												...data,
-												description:
-													e.target.value.trim() === ""
-														? undefined
-														: e.target.value,
-											}))
-										}
-									/>,
+									<Textarea defaultValue={_task.description} ref={descRef} />,
 								)}
 								{Item(
 									<></>,

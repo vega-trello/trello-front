@@ -1,11 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { API, QueryKeys, useApiMutation } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
+import { HTTP } from "../../../shared/api/status";
 
 export const useCreateColumn = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Columns.Create, 201, {
+	return useApiMutation(API.Project.Columns.Create, HTTP.Created, {
 		onSuccess: (column) => {
 			queryClient.invalidateQueries({
 				queryKey: QueryKeys.columns(column.project_uuid),
@@ -17,7 +18,7 @@ export const useCreateColumn = () => {
 export const useUpdateColumn = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Columns.Update, 200, {
+	return useApiMutation(API.Project.Columns.Update, HTTP.OK, {
 		onSuccess: (column) => {
 			queryClient.setQueryData(QueryKeys.column(column.id), column);
 			queryClient.invalidateQueries({
@@ -30,7 +31,7 @@ export const useUpdateColumn = () => {
 export const useMoveColumn = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Columns.Move, 200, {
+	return useApiMutation(API.Project.Columns.Move, HTTP.OK, {
 		onSuccess: (column) => {
 			queryClient.invalidateQueries({
 				queryKey: QueryKeys.columns(column.project_uuid),
@@ -42,7 +43,7 @@ export const useMoveColumn = () => {
 export const useDeleteColumn = (projectUUID: UUID) => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Columns.Delete, 204, {
+	return useApiMutation(API.Project.Columns.Delete, HTTP.NoContent, {
 		onSuccess: (_, { columnID }) => {
 			queryClient.removeQueries({ queryKey: QueryKeys.column(columnID) });
 			queryClient.invalidateQueries({

@@ -1,4 +1,4 @@
-import { For, HStack, Spinner } from "@chakra-ui/react";
+import { For, HStack } from "@chakra-ui/react";
 import { useColumns, Column } from "../../entities/column";
 import type { UUID } from "../../shared/api/openapi/components/schemas";
 import { ErrorAlert, Loader } from "../";

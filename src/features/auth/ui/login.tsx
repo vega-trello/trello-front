@@ -11,6 +11,7 @@ import { NavLink } from "react-router";
 import { useCallback, useState } from "react";
 import { errorMessage, PasswordInput, toaster } from "../../../shared";
 import { useLogin } from "../../../entities/user";
+import { SSOButton } from "./sso-button";
 
 export function Login() {
 	const login = useLogin();
@@ -61,9 +62,8 @@ export function Login() {
 							Ещё нету аккаунта?{" "}
 							<NavLink to="/register">Зарегестрироваться</NavLink>
 						</span>
-						<Button mt="4" type="submit">
-							Продолжить
-						</Button>
+						<SSOButton />
+						<Button type="submit">Продолжить</Button>
 					</form>
 				</Stack>
 			</Box>

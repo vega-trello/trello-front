@@ -1,10 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { API, QueryKeys, useApiMutation } from "../../../shared";
+import { HTTP } from "../../../shared/api/status";
 
 export const useCreateStatus = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Statuses.Create, 201, {
+	return useApiMutation(API.Project.Statuses.Create, HTTP.Created, {
 		onSuccess: (_, { projectUUID }) => {
 			queryClient.invalidateQueries({
 				queryKey: QueryKeys.statuses(projectUUID),
@@ -16,7 +17,7 @@ export const useCreateStatus = () => {
 export const useUpdateStatus = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Statuses.Update, 200, {
+	return useApiMutation(API.Project.Statuses.Update, HTTP.OK, {
 		onSuccess: (status, { projectUUID, statusID }) => {
 			queryClient.setQueryData(QueryKeys.status(projectUUID, statusID), status);
 			queryClient.invalidateQueries({
@@ -32,7 +33,7 @@ export const useUpdateStatus = () => {
 export const useDeleteStatus = () => {
 	const queryClient = useQueryClient();
 
-	return useApiMutation(API.Project.Statuses.Delete, 204, {
+	return useApiMutation(API.Project.Statuses.Delete, HTTP.NoContent, {
 		onSuccess: (_, { statusID, projectUUID }) => {
 			queryClient.removeQueries({
 				queryKey: QueryKeys.status(projectUUID, statusID),

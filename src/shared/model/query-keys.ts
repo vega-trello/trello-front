@@ -18,4 +18,12 @@ export const QueryKeys = {
 	status: (projectUUID: UUID, statusID: integer) =>
 		["project", projectUUID, "status", statusID] as const,
 	taskTags: (taskID: integer) => ["task", taskID, "tags"] as const,
+	assignees: (projectUUID: UUID, taskID: integer) =>
+		["project", projectUUID, "task", taskID, "assignees"] as const,
+	members: (projectUUID: UUID) => ["project", projectUUID, "members"] as const,
+	member: (projectUUID: UUID, userUUID: UUID) =>
+		["project", projectUUID, "member", userUUID] as const,
+	roles: (projectUUID: UUID) => ["project", projectUUID, "roles"] as const,
+	role: (projectUUID: UUID, roleID: integer) =>
+		["project", projectUUID, "role", roleID] as const,
 };

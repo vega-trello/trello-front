@@ -91,14 +91,12 @@ function TagEdit({
 									<ColorPicker.HiddenInput />
 									<ColorPicker.Control>
 										<ColorPicker.Trigger />
+										<ColorPicker.Input />
 									</ColorPicker.Control>
 									<ColorPicker.Positioner>
 										<ColorPicker.Content>
 											<ColorPicker.Area />
-											<HStack>
-												<ColorPicker.EyeDropper size="xs" variant="outline" />
-												<ColorPicker.Sliders />
-											</HStack>
+											<ColorPicker.Sliders />
 										</ColorPicker.Content>
 									</ColorPicker.Positioner>
 								</ColorPicker.Root>
@@ -215,7 +213,7 @@ export function TagView({ projectUUID }: { projectUUID: UUID }) {
 
 				<Box display="flex" flexDirection="column" gap="2">
 					<For each={tags}>
-						{(tag) => <Tag tag={tag} projectUUID={projectUUID} />}
+						{(tag) => <Tag key={tag.id} tag={tag} projectUUID={projectUUID} />}
 					</For>
 				</Box>
 

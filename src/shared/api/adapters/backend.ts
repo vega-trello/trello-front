@@ -43,6 +43,12 @@ import {
 	SelfGet,
 	SelfUpdate,
 	UserGet,
+	AuthExchange,
+	StatusesGetAll,
+	StatusesCreate,
+	StatusesGet,
+	StatusesUpdate,
+	StatusesDelete,
 } from "../openapi/paths/paths";
 
 const s = (n: number) => n.toString();
@@ -52,8 +58,9 @@ export const Adapter: APIAdapter = {
 		Register: ({ username, password }, signal) =>
 			AuthRegister({}, {}, { username, password }, signal),
 		Login: ({ username, password }, signal) =>
-			AuthLogin(username, password, signal),
+			AuthLogin({}, {}, { username, password }, signal),
 		Logout: (_, signal) => AuthLogout({}, {}, {}, signal),
+		Exchange: ({ token }, signal) => AuthExchange({}, {}, { token }, signal),
 	},
 	Self: {
 		Get: (_, signal) => SelfGet({}, {}, signal),
@@ -84,6 +91,23 @@ export const Adapter: APIAdapter = {
 			Delete: ({ columnID }, signal) =>
 				ColumnDelete({ columnID: s(columnID) }, {}, signal),
 		},
+		Statuses: {
+			GetAll: ({ projectUUID }, signal) =>
+				StatusesGetAll({ projectUUID }, {}, signal),
+			Create: ({ projectUUID, ...rest }, signal) =>
+				StatusesCreate({ projectUUID }, {}, rest, signal),
+			Get: ({ projectUUID, statusID }, signal) =>
+				StatusesGet({ projectUUID, statusID: s(statusID) }, {}, signal),
+			Update: ({ projectUUID, statusID, ...rest }, signal) =>
+				StatusesUpdate(
+					{ projectUUID, statusID: s(statusID) },
+					{},
+					rest,
+					signal,
+				),
+			Delete: ({ projectUUID, statusID }, signal) =>
+				StatusesDelete({ projectUUID, statusID: s(statusID) }, {}, signal),
+		},
 		Members: {
 			GetAll: ({ projectUUID }, signal) =>
 				MemberGetAll({ projectUUID }, {}, signal),
@@ -109,17 +133,21 @@ export const Adapter: APIAdapter = {
 				TaskDelete({ projectUUID }, { taskID: s(taskID) }, signal),
 
 			Tags: {
-				GetAll: ({ taskID }, signal) =>
-					TaskTagGetAll({}, { taskID: s(taskID) }, signal),
-				Create: ({ taskID, tagID, ...rest }, signal) =>
+				GetAll: ({ projectUUID, taskID }, signal) =>
+					TaskTagGetAll({ projectUUID }, { taskID: s(taskID) }, signal),
+				Create: ({ projectUUID, taskID, tagID, ...rest }, signal) =>
 					TaskTagCreate(
-						{},
+						{ projectUUID },
 						{ taskID: s(taskID), tagID: s(tagID) },
 						rest,
 						signal,
 					),
-				Delete: ({ taskID, tagID }, signal) =>
-					TaskTagDelete({}, { taskID: s(taskID), tagID: s(tagID) }, signal),
+				Delete: ({ projectUUID, taskID, tagID }, signal) =>
+					TaskTagDelete(
+						{ projectUUID },
+						{ taskID: s(taskID), tagID: s(tagID) },
+						signal,
+					),
 			},
 		},
 		Assignees: {

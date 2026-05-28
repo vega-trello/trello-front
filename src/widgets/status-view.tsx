@@ -13,13 +13,7 @@ import type { Status, UUID } from "../shared/api/openapi/components/schemas";
 import { ErrorAlert } from "./error-alert";
 import { createAlertDialog, errorMessage, toaster, useTitle } from "../shared";
 import { Loader } from "./loader";
-import {
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-	type PropsWithChildren,
-} from "react";
+import { useCallback, useRef, useState, type PropsWithChildren } from "react";
 import { HiOutlinePencilAlt, HiOutlineTrash } from "react-icons/hi";
 import {
 	useCreateStatus,
@@ -135,9 +129,6 @@ function Status({ projectUUID, status }: StatusProps) {
 
 export function StatusView({ projectUUID }: { projectUUID: UUID }) {
 	const { data: status, isLoading, isError, error } = useStatuses(projectUUID);
-	useEffect(() => {
-		console.log(status, isLoading, isError, error);
-	}, [status, isLoading, isError, error]);
 	const createStatus = useCreateStatus();
 	useTitle("Статусы");
 
@@ -170,14 +161,25 @@ export function StatusView({ projectUUID }: { projectUUID: UUID }) {
 							Статусов в проекте: {status.length}
 						</Text>
 					</Box>
-					<Button size="sm" colorScheme="blue" onClick={handleCreate}>
+					<Button
+						size="sm"
+						colorScheme="blue"
+						onClick={handleCreate}
+						loading={createStatus.isPending}
+					>
 						+ Добавить статус
 					</Button>
 				</Flex>
 
 				<Box display="flex" flexDirection="column" gap="2">
 					<For each={status}>
-						{(status) => <Status status={status} projectUUID={projectUUID} />}
+						{(status) => (
+							<Status
+								key={status.id}
+								status={status}
+								projectUUID={projectUUID}
+							/>
+						)}
 					</For>
 				</Box>
 

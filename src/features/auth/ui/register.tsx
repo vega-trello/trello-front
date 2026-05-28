@@ -11,6 +11,7 @@ import { NavLink, useNavigate } from "react-router";
 import { errorMessage, PasswordInput, toaster } from "../../../shared";
 import { useCallback, useState } from "react";
 import { useRegister } from "../../../entities/user";
+import { SSOButton } from "./sso-button";
 
 export function Register() {
 	const [username, setUsername] = useState("");
@@ -33,6 +34,10 @@ export function Register() {
 			},
 		);
 	}, [register, username, password, navigate]);
+
+	const handleSSOToken = (token: string) => {
+		toaster.info({ title: "Token", description: token });
+	};
 
 	return (
 		<Center flexGrow="1">
@@ -66,9 +71,8 @@ export function Register() {
 						<span style={{ textAlign: "center" }}>
 							Уже есть аккаунт? <NavLink to="/login">Войти</NavLink>
 						</span>
-						<Button mt="4" type="submit">
-							Продолжить
-						</Button>
+						<SSOButton callback={handleSSOToken} />
+						<Button type="submit">Продолжить</Button>
 					</form>
 				</Stack>
 			</Box>

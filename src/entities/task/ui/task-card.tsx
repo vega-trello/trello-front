@@ -8,6 +8,8 @@ import { TaskEditor } from "./task-editor";
 import { FoldableTag } from "../../tag";
 import { HiOutlineClock, HiOutlineMenuAlt2 } from "react-icons/hi";
 import { ErrorAlert } from "../../../widgets";
+import { useStatus } from "../../status";
+import { useAssignees } from "../../assignee";
 
 export type TaskCardProps = {
 	task: Task;
@@ -22,7 +24,14 @@ function formatShortDate(date: Date): string {
 }
 
 export function TaskCard({ task, projectUUID }: TaskCardProps) {
-	const { data: tags, isLoading, isError, error } = useTaskTags(task.id);
+	const {
+		data: tags,
+		isLoading,
+		isError,
+		error,
+	} = useTaskTags(projectUUID, task.id);
+	const { data: status } = useStatus(projectUUID, task.status_id ?? -1);
+	const { data: assignees } = useAssignees(projectUUID, task.id);
 	const title =
 		task.title === undefined || task.title.trim().length === 0
 			? "​"
@@ -36,15 +45,18 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 		description:
 			task.description !== undefined && task.description.length !== 0,
 	};
-	console.log(task.description, task.description?.length);
-	const anyModifier = Object.values(modifiers).some((m) => m !== undefined);
+	const anyModifier = Object.values(modifiers).some((t) => t);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isLoading) return <Spinner size="sm" />;
-	if (tags === undefined) return <>Что-то пошло не так</>;
 
 	return (
-		<TaskEditor task={task} tags={tags} projectUUID={projectUUID}>
+		<TaskEditor
+			projectUUID={projectUUID}
+			task={task}
+			tags={tags ?? []}
+			assignees={assignees ?? []}
+		>
 			<Box
 				className="task-card"
 				role="group"
@@ -61,14 +73,14 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 						paddingRight: "0.75rem",
 					},
 					"&:hover .foldable-tag-text": {
-						opacity: 1,
+						opacity: 0.75,
 					},
 				}}
 				display="flex"
 				flexDirection="column"
 				gap="1"
 			>
-				{tags.length !== 0 && (
+				{tags !== undefined && tags.length !== 0 && (
 					<Box display="flex" flexWrap="wrap" gap="1">
 						{tags.map((tag) => (
 							<FoldableTag tag={tag} key={tag.id} />
@@ -76,9 +88,15 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 					</Box>
 				)}
 				<Text fontSize="sm">{title}</Text>
+				{task.status_id !== undefined && status !== undefined && (
+					<Text fontSize="xs" color="fg.muted">
+						{status.name}
+					</Text>
+				)}
+				
 				{anyModifier && (
 					<Box display="flex" gap="4" flexWrap="nowrap" alignItems="center">
-						{modifiers.deadline !== undefined && (
+						{modifiers.deadline && (
 							<Box
 								display="flex"
 								alignItems="center"
@@ -91,7 +109,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 								</Text>
 							</Box>
 						)}
-						{modifiers.description !== undefined && <HiOutlineMenuAlt2 />}
+						{modifiers.description && <HiOutlineMenuAlt2 />}
 					</Box>
 				)}
 			</Box>

@@ -3,7 +3,7 @@ import { Spinner } from "@chakra-ui/react";
 export function Loader({
 	size,
 }: {
-	size: "inherit" | "xs" | "sm" | "md" | "lg" | "xl" | undefined;
+	size?: "inherit" | "xs" | "sm" | "md" | "lg" | "xl" | undefined;
 }) {
 	return (
 		<div

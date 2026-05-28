@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { HiDotsVertical } from "react-icons/hi";
 import type { Project } from "../../shared/api/openapi/components/schemas";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 
 export type ProjectCallbacks = {
 	onSelect: (project: Project) => void;
@@ -103,9 +103,11 @@ function ProjectCard({
 			</Card.Header>
 
 			<Card.Body>
-				<Text color="fg.muted" whiteSpace="normal">
-					{project.description ?? "—"}
-				</Text>
+				{project.description && (
+					<Text color="fg.muted" whiteSpace="normal">
+						{project.description}
+					</Text>
+				)}
 			</Card.Body>
 
 			<Card.Footer>
@@ -121,7 +123,9 @@ export function ProjectsCards({ projects, ...rest }: ProjectsCardsProps) {
 	return (
 		<SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap="6" w="full">
 			<For each={projects}>
-				{(project) => <ProjectCard project={project} {...rest} />}
+				{(project) => (
+					<ProjectCard key={project.uuid} project={project} {...rest} />
+				)}
 			</For>
 		</SimpleGrid>
 	);

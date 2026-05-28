@@ -2,11 +2,12 @@ import { API, QueryKeys } from "../../../shared";
 import type { UUID } from "../../../shared/api/openapi/components/schemas";
 import { useApiQuery } from "../../../shared";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
+import { HTTP } from "../../../shared/api/status";
 
 export const useStatuses = (projectUUID: UUID) =>
 	useApiQuery(
 		API.Project.Statuses.GetAll,
-		200,
+		HTTP.OK,
 		{ projectUUID },
 		{
 			queryKey: QueryKeys.statuses(projectUUID),
@@ -16,7 +17,7 @@ export const useStatuses = (projectUUID: UUID) =>
 export const useStatus = (projectUUID: UUID, statusID: integer) =>
 	useApiQuery(
 		API.Project.Statuses.Get,
-		200,
+		HTTP.OK,
 		{ projectUUID, statusID },
 		{
 			queryKey: QueryKeys.status(projectUUID, statusID),

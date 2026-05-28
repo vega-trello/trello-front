@@ -1,11 +1,17 @@
 import { Box, Text } from "@chakra-ui/react";
 import type { Tag } from "../../../shared/api/openapi/components/schemas";
+import { getTextColor } from "../../../shared/model/get-text-color";
+import { useMemo } from "react";
 
 export type FoldableTagProps = {
 	tag: Tag;
 };
 
 export function FoldableTag({ tag }: FoldableTagProps) {
+	const color = useMemo(() => {
+		return getTextColor(tag.color);
+	}, [tag.color]);
+
 	return (
 		<Box
 			className="foldable-tag"
@@ -22,8 +28,7 @@ export function FoldableTag({ tag }: FoldableTagProps) {
 		>
 			<Text
 				className="foldable-tag-text"
-				mixBlendMode="difference"
-				color="white"
+				color={color}
 				fontSize="sm"
 				whiteSpace="nowrap"
 				opacity={0}

@@ -1,4 +1,4 @@
-import { tokenStorage } from "../../tokenStorage";
+import { tokenStorage } from "../../token-storage";
 import type {
 	Param,
 	QueryParam,
