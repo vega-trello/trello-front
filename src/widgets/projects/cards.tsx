@@ -58,7 +58,7 @@ function CardMenu({
 								onDelete(project);
 							}}
 						>
-							Удалить
+							Удалить / Выйти
 						</Menu.Item>
 					</Menu.Content>
 				</Menu.Positioner>

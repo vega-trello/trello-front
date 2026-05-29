@@ -4,9 +4,9 @@ import {
 	createOverlay,
 	Dialog,
 	Field,
+	Flex,
 	Input,
 	Portal,
-	Spinner,
 	Stack,
 } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
@@ -18,7 +18,7 @@ import {
 	useDeleteProject,
 	useUpdateProject,
 } from "../../../entities/project";
-import { ProjectsCards, ErrorAlert } from "../../../widgets";
+import { ProjectsCards, ErrorAlert, Loader } from "../../../widgets";
 import {
 	createAlertDialog,
 	errorMessage,
@@ -30,9 +30,14 @@ import "./projects.css";
 const deleteDialog = createAlertDialog({
 	title: "Вы уверены?",
 	body: (
-		<>
-			Это действие приведёт к <b>НЕВОЗВРАТНОМУ</b> удалению всего проекта
-		</>
+		<Flex flexDirection="column">
+			<span>Если вы создатель проекта:</span>
+			<span>
+				Это действие приведёт к <b>НЕВОЗВРАТНОМУ</b> удалению всего проекта
+			</span>
+			<span>Если вы НЕ создатель: {"\n\t"}</span>
+			<span>Вы выйдите из проекта</span>
+		</Flex>
 	),
 });
 
@@ -62,7 +67,9 @@ const editProjectDialog = createOverlay<{ project: Project }>(
 				<Portal>
 					<Dialog.Backdrop />
 					<Dialog.Content>
-						<Dialog.Header>Изменить проект</Dialog.Header>
+						<Dialog.Header>
+							<Dialog.Title>Изменить проект</Dialog.Title>
+						</Dialog.Header>
 						<Dialog.Body>
 							<Stack gap="4">
 								<Field.Root>
@@ -111,7 +118,7 @@ const editProjectDialog = createOverlay<{ project: Project }>(
 );
 
 export function Projects() {
-	const { data: projects, isLoading, isError, error } = useProjects();
+	const { data: projects, isPending, isError, error } = useProjects();
 	const deleteProject = useDeleteProject();
 	const navigate = useNavigate();
 	useTitle("Проекты");
@@ -130,8 +137,7 @@ export function Projects() {
 	);
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner size="lg" />;
-	if (projects === undefined) return <></>;
+	if (isPending) return <Loader size="lg" />;
 
 	return (
 		<div id="projects">

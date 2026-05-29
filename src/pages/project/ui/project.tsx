@@ -32,14 +32,13 @@ function TabV(value: string, content: React.ReactNode) {
 export function Project() {
 	const [query, setQuery] = useSearchParams();
 	const { uuid } = useParams<{ uuid: string }>();
-	const { data: project, isLoading, isError, error } = useProject(uuid ?? "");
+	const { data: project, isPending, isError, error } = useProject(uuid ?? "");
 	useSetHeading(project?.title);
 
 	const tab = query.get("tab") ?? "table";
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner size="xl" />;
-	if (project === undefined) return <></>;
+	if (isPending) return <Spinner size="xl" />;
 
 	return (
 		<Tabs.Root

@@ -590,3 +590,11 @@ export const RolePermissionGetAll = GET<
 		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/roles/{roleID}/permissions");
+
+export const PermissionsGetAll = GET<
+	[],
+	{
+		[HTTP.OK]: Response<Permission[]>;
+		[HTTP.Unauthorized]: Unauthorized;
+	}
+>("/projects/permissions");

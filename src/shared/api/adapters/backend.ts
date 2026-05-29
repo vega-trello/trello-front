@@ -49,6 +49,7 @@ import {
 	StatusesGet,
 	StatusesUpdate,
 	StatusesDelete,
+	PermissionsGetAll,
 } from "../openapi/paths/paths";
 
 const s = (n: number) => n.toString();
@@ -189,5 +190,8 @@ export const Adapter: APIAdapter = {
 					RolePermissionGetAll({ projectUUID, roleID: s(roleID) }, {}, signal),
 			},
 		},
+	},
+	Permissions: {
+		GetAll: (_, signal) => PermissionsGetAll({}, {}, signal),
 	},
 };

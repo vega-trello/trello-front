@@ -18,3 +18,11 @@ export const useRole = (projectUUID: UUID, roleID: integer) =>
 		{ projectUUID, roleID },
 		{ queryKey: QueryKeys.role(projectUUID, roleID) },
 	);
+
+export const useRolePermissions = (projectUUID: UUID, roleID: integer) =>
+	useApiQuery(
+		API.Project.Roles.Permissions.GetAll,
+		HTTP.OK,
+		{ projectUUID, roleID },
+		{ queryKey: QueryKeys.rolePermissions(projectUUID, roleID) },
+	);

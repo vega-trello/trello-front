@@ -1,4 +1,4 @@
-import { Spinner } from "@chakra-ui/react";
+import { Flex, Spinner } from "@chakra-ui/react";
 
 export function Loader({
 	size,
@@ -6,16 +6,8 @@ export function Loader({
 	size?: "inherit" | "xs" | "sm" | "md" | "lg" | "xl" | undefined;
 }) {
 	return (
-		<div
-			style={{
-				width: "100%",
-				height: "100%",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
-			}}
-		>
+		<Flex width="100%" height="100%" justify="center" align="center">
 			<Spinner size={size} />
-		</div>
+		</Flex>
 	);
 }

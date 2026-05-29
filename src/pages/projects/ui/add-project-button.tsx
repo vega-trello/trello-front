@@ -44,7 +44,7 @@ export function AddProjectButton() {
 			motionPreset="slide-in-bottom"
 			placement="center"
 		>
-			<Dialog.Trigger display="contents" as="div">
+			<Dialog.Trigger asChild>
 				<Button id="add-project" variant="solid">
 					Добавить
 				</Button>

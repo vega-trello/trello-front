@@ -3,9 +3,9 @@ import { useSelf } from "../entities/user";
 import { Spinner } from "@chakra-ui/react";
 
 export function RequireAuth() {
-	const { data: user, isLoading } = useSelf();
+	const { data: user, isPending } = useSelf();
 
-	if (isLoading) return <Spinner />;
+	if (isPending) return <Spinner />;
 	if (!user) return <Navigate to="/login" replace />;
 	return <Outlet />;
 }

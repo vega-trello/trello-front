@@ -19,13 +19,12 @@ function ColumnWrapper({ children }: PropsWithChildren) {
 }
 
 export function ColumnView({ projectUUID }: { projectUUID: UUID }) {
-	const { data: columns, isError, error, isLoading } = useColumns(projectUUID);
+	const { data: columns, isError, error, isPending } = useColumns(projectUUID);
 
 	useTitle("Доска");
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Loader size="xl" />;
-	if (columns === undefined) return <>Что-то пошло не так</>;
+	if (isPending) return <Loader size="xl" />;
 
 	return (
 		<HStack

@@ -3,7 +3,7 @@ import { API, QueryKeys } from "../../../shared";
 import { useApiMutation } from "../../../shared/model/use-api-mutation";
 import { HTTP } from "../../../shared/api/status";
 
-export const useAddMember = () => {
+export const useCreateMember = () => {
 	const queryClient = useQueryClient();
 
 	return useApiMutation(API.Project.Members.Create, HTTP.Created, {
@@ -28,7 +28,7 @@ export const useUpdateMember = () => {
 	});
 };
 
-export const useRemoveMember = () => {
+export const useDeleteMember = () => {
 	const queryClient = useQueryClient();
 
 	return useApiMutation(API.Project.Members.Delete, HTTP.NoContent, {

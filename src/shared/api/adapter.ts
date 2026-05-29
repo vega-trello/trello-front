@@ -581,4 +581,14 @@ export type APIAdapter = {
 			};
 		};
 	};
+
+	Permissions: {
+		GetAll: (
+			req: {},
+			signal?: AbortSignal,
+		) => Responses<{
+			[HTTP.OK]: Response<Permission[]>;
+			[HTTP.Unauthorized]: Unauthorized;
+		}>;
+	};
 };

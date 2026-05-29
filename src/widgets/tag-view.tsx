@@ -158,6 +158,7 @@ function Tag({ projectUUID, tag }: TagProps) {
 					</IconButton>
 				</TagEdit>
 				<IconButton
+					loading={deleteTag.isPending}
 					variant="ghost"
 					colorPalette="red"
 					onClick={() =>
@@ -172,7 +173,7 @@ function Tag({ projectUUID, tag }: TagProps) {
 }
 
 export function TagView({ projectUUID }: { projectUUID: UUID }) {
-	const { data: tags, isLoading, isError, error } = useTags(projectUUID);
+	const { data: tags, isPending, isError, error } = useTags(projectUUID);
 	const createTag = useCreateTag();
 	useTitle("Тэги");
 
@@ -189,9 +190,8 @@ export function TagView({ projectUUID }: { projectUUID: UUID }) {
 		);
 	}, [createTag, projectUUID]);
 
-	if (isLoading) return <Loader size="xl" />;
 	if (isError) return <ErrorAlert error={error} />;
-	if (tags === undefined) return <>Что-то пошло не так</>;
+	if (isPending) return <Loader size="xl" />;
 
 	return (
 		<Box display="flex" justifyContent="center" padding="8">

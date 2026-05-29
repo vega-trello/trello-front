@@ -4,3 +4,4 @@ export {
 	useDeleteRole,
 	useUpdateRole,
 } from "./model/use-role-mutations";
+export { editRoleDialog } from "./ui/edit-role-dialog";

@@ -26,4 +26,7 @@ export const QueryKeys = {
 	roles: (projectUUID: UUID) => ["project", projectUUID, "roles"] as const,
 	role: (projectUUID: UUID, roleID: integer) =>
 		["project", projectUUID, "role", roleID] as const,
+	permissions: ["permissions"] as const,
+	rolePermissions: (projectUUID: UUID, roleID: integer) =>
+		["project", projectUUID, "role", roleID, "permissions"] as const,
 };

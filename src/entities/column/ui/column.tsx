@@ -21,11 +21,7 @@ import { ErrorAlert } from "../../../widgets";
 import { useCallback } from "react";
 import { errorMessage, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
-import {
-	useColumn,
-	useDeleteColumn,
-	useMoveColumn,
-} from "../";
+import { useColumn, useDeleteColumn, useMoveColumn } from "../";
 import { renameDialog } from "./rename-dialog";
 import { deleteDialog } from "./delete-dialog";
 
@@ -131,7 +127,7 @@ function ColumnMenu({
 }
 
 export function Column({ projectUUID, columnID }: ColumnProps) {
-	const { data: column, isLoading, isError, error } = useColumn(columnID);
+	const { data: column, isPending, isError, error } = useColumn(columnID);
 	const { data: allTasks } = useTasks(projectUUID);
 	const tasks = allTasks?.filter(
 		(task) =>
@@ -139,8 +135,7 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	);
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner />;
-	if (column === undefined) return <>Watafaq</>;
+	if (isPending) return <Spinner />;
 
 	return (
 		<Box
@@ -181,7 +176,9 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 				>
 					{tasks !== undefined ? (
 						<For each={tasks}>
-							{(task) => <TaskCard key={task.id} task={task} projectUUID={projectUUID}/>}
+							{(task) => (
+								<TaskCard key={task.id} task={task} projectUUID={projectUUID} />
+							)}
 						</For>
 					) : (
 						<Spinner />

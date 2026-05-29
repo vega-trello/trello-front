@@ -35,10 +35,6 @@ export function Register() {
 		);
 	}, [register, username, password, navigate]);
 
-	const handleSSOToken = (token: string) => {
-		toaster.info({ title: "Token", description: token });
-	};
-
 	return (
 		<Center flexGrow="1">
 			<Box width="320px" maxWidth="100%">
@@ -71,7 +67,7 @@ export function Register() {
 						<span style={{ textAlign: "center" }}>
 							Уже есть аккаунт? <NavLink to="/login">Войти</NavLink>
 						</span>
-						<SSOButton callback={handleSSOToken} />
+						<SSOButton />
 						<Button type="submit">Продолжить</Button>
 					</form>
 				</Stack>

@@ -15,7 +15,7 @@ const deleteDialog = createAlertDialog({
 });
 
 export function ArchiveView({ projectUUID }: { projectUUID: UUID }) {
-	const { data: allTasks, isLoading, isError, error } = useTasks(projectUUID);
+	const { data: allTasks, isPending, isError, error } = useTasks(projectUUID);
 	const archivedTasks = allTasks?.filter((t) => t.archived_at !== undefined);
 
 	const deleteTask = useDeleteTask();
@@ -29,8 +29,7 @@ export function ArchiveView({ projectUUID }: { projectUUID: UUID }) {
 	useTitle("Архив");
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner size="lg" />;
-	if (archivedTasks === undefined) return <>Что-то пошло не так</>;
+	if (isPending) return <Spinner size="lg" />;
 
 	return (
 		<Box display="flex" flexDirection="column" padding="2" gap="4">
@@ -49,7 +48,9 @@ export function ArchiveView({ projectUUID }: { projectUUID: UUID }) {
 				</Button>
 			</Box>
 			<Grid templateColumns="repeat(auto-fit, 280px)" gap="2">
-				<For each={archivedTasks}>{(task) => <TaskCard task={task} />}</For>
+				<For each={archivedTasks}>
+					{(task) => <TaskCard task={task} projectUUID={projectUUID} />}
+				</For>
 			</Grid>
 		</Box>
 	);

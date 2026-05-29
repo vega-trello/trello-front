@@ -6,7 +6,7 @@ import { errorMessage, toaster } from "../shared";
 import { useCallback } from "react";
 
 export function User() {
-	const { data: user, isLoading, isError } = useSelf();
+	const { data: user, isPending, isError } = useSelf();
 	const logout = useLogout();
 	const navigate = useNavigate();
 
@@ -24,7 +24,7 @@ export function User() {
 	);
 
 	if (isError) return <></>;
-	if (isLoading) return <Spinner size="xs" />;
+	if (isPending) return <Spinner size="xs" />;
 	if (user === undefined) return <>Что-то пошло не так</>;
 
 	return (

@@ -62,7 +62,7 @@ function StatusEdit({
 				<Dialog.Positioner>
 					<Dialog.Content>
 						<Dialog.Header>
-							<Dialog.Title>Редактирование тэга</Dialog.Title>
+							<Dialog.Title>Редактирование статуса</Dialog.Title>
 						</Dialog.Header>
 						<Dialog.Body>
 							<Input
@@ -114,6 +114,7 @@ function Status({ projectUUID, status }: StatusProps) {
 					</IconButton>
 				</StatusEdit>
 				<IconButton
+					loading={deleteStatus.isPending}
 					variant="ghost"
 					colorPalette="red"
 					onClick={() =>
@@ -128,7 +129,7 @@ function Status({ projectUUID, status }: StatusProps) {
 }
 
 export function StatusView({ projectUUID }: { projectUUID: UUID }) {
-	const { data: status, isLoading, isError, error } = useStatuses(projectUUID);
+	const { data: status, isPending, isError, error } = useStatuses(projectUUID);
 	const createStatus = useCreateStatus();
 	useTitle("Статусы");
 
@@ -144,9 +145,8 @@ export function StatusView({ projectUUID }: { projectUUID: UUID }) {
 		);
 	}, [createStatus, projectUUID]);
 
-	if (isLoading) return <Loader size="xl" />;
 	if (isError) return <ErrorAlert error={error} />;
-	if (status === undefined) return <>Что-то пошло не так</>;
+	if (isPending) return <Loader size="xl" />;
 
 	return (
 		<Box display="flex" justifyContent="center" padding="8">

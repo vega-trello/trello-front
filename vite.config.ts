@@ -6,9 +6,7 @@ export default defineConfig(({ mode }) => ({
 	base: mode === "gh-pages" ? "/trello-front/" : "/",
 	build: {
 		rolldownOptions: {
-			output: {
-				codeSplitting: true,
-			},
+			output: {},
 		},
 	},
 }));

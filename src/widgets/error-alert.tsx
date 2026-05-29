@@ -16,6 +16,7 @@ export function ErrorAlert<
 			justifyContent="center"
 			textAlign="center"
 			p={8}
+			margin='auto'
 		>
 			<Alert.Title mt={4} mb={1} fontSize="lg">
 				[{error.status}] {title}

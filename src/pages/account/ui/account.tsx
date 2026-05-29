@@ -1,8 +1,11 @@
 import {
 	Box,
 	Button,
+	Clipboard,
 	Dialog,
 	Field,
+	Flex,
+	IconButton,
 	Input,
 	Portal,
 	Stack,
@@ -89,7 +92,9 @@ function UpdateDialog({
 				<Dialog.Backdrop />
 				<Dialog.Positioner>
 					<Dialog.Content>
-						<Dialog.Header>Изменить пользователя</Dialog.Header>
+						<Dialog.Header>
+							<Dialog.Title>Изменить пользователя</Dialog.Title>
+						</Dialog.Header>
 						<Dialog.Body>
 							<Stack gap="4">
 								<Field.Root>
@@ -127,17 +132,29 @@ function UpdateDialog({
 }
 
 export function Page() {
-	const { data: user, isLoading, isError, error } = useSelf();
+	const { data: user, isPending, isError, error } = useSelf();
 	useTitle("Аккаунт");
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Loader size="lg" />;
-	if (user === undefined) return <>Что-то пошло не так</>;
+	if (isPending) return <Loader size="lg" />;
 
 	return (
 		<Box display="flex" justifyContent="center" padding="8">
 			<updateDialog.Viewport />
 			<Box w="100%" maxW="640px" display="flex" flexDirection="column" gap="6">
+				<Field.Root>
+					<Field.Label>Идентификатор пользователя</Field.Label>
+					<Flex wrap="nowrap" alignItems="center" gap="1">
+						<Text fontFamily="mono">{user.uuid}</Text>
+						<Clipboard.Root value={user.uuid}>
+							<Clipboard.Trigger asChild>
+								<IconButton variant="outline" size="xs">
+									<Clipboard.Indicator />
+								</IconButton>
+							</Clipboard.Trigger>
+						</Clipboard.Root>
+					</Flex>
+				</Field.Root>
 				<Field.Root>
 					<Field.Label>Имя пользователя</Field.Label>
 					<Text>{user.username}</Text>

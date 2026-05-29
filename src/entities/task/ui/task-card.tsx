@@ -6,10 +6,16 @@ import type {
 import { useTaskTags } from "../";
 import { TaskEditor } from "./task-editor";
 import { FoldableTag } from "../../tag";
-import { HiOutlineClock, HiOutlineMenuAlt2 } from "react-icons/hi";
+import {
+	HiOutlineClock,
+	HiOutlineEye,
+	HiOutlineMenuAlt2,
+} from "react-icons/hi";
 import { ErrorAlert } from "../../../widgets";
 import { useStatus } from "../../status";
 import { useAssignees } from "../../assignee";
+import { AssigneeAvatars } from "./assignee-avatars";
+import { useSelf } from "../../user";
 
 export type TaskCardProps = {
 	task: Task;
@@ -24,9 +30,10 @@ function formatShortDate(date: Date): string {
 }
 
 export function TaskCard({ task, projectUUID }: TaskCardProps) {
+	const { data: user } = useSelf();
 	const {
 		data: tags,
-		isLoading,
+		isPending,
 		isError,
 		error,
 	} = useTaskTags(projectUUID, task.id);
@@ -38,6 +45,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 			: task.title;
 
 	const modifiers = {
+		subscribed: assignees?.some((a) => a.user_uuid === user?.uuid),
 		deadline:
 			task.end_date !== undefined
 				? formatShortDate(new Date(task.end_date))
@@ -46,9 +54,17 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 			task.description !== undefined && task.description.length !== 0,
 	};
 	const anyModifier = Object.values(modifiers).some((t) => t);
+	const hasAssignees = assignees && assignees.length > 0;
 
 	if (isError) return <ErrorAlert error={error} />;
-	if (isLoading) return <Spinner size="sm" />;
+	if (isPending) return <Spinner size="sm" />;
+
+	const deadlineColor =
+		task.end_date !== undefined
+			? new Date(task.end_date).getTime() < new Date().getTime()
+				? "red"
+				: undefined
+			: undefined;
 
 	return (
 		<TaskEditor
@@ -93,23 +109,42 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 						{status.name}
 					</Text>
 				)}
-				
-				{anyModifier && (
-					<Box display="flex" gap="4" flexWrap="nowrap" alignItems="center">
-						{modifiers.deadline && (
-							<Box
-								display="flex"
-								alignItems="center"
-								whiteSpace="nowrap"
-								gap="0.5"
-							>
-								<HiOutlineClock />
-								<Text fontSize="sm" fontWeight="medium" lineHeight={1}>
-									{modifiers.deadline}
-								</Text>
-							</Box>
-						)}
-						{modifiers.description && <HiOutlineMenuAlt2 />}
+
+				{(anyModifier || hasAssignees) && (
+					<Box
+						display="flex"
+						gapX="4"
+						gapY="1"
+						flexWrap="wrap"
+						alignItems="center"
+						justifyContent="space-between"
+					>
+						<Box display="flex" gap="2" alignItems="center" flexWrap="nowrap">
+							{modifiers.subscribed && <HiOutlineEye />}
+							{modifiers.deadline && (
+								<Box
+									display="flex"
+									alignItems="center"
+									whiteSpace="nowrap"
+									gap="0.5"
+								>
+									<HiOutlineClock color={deadlineColor} />
+									<Text
+										fontSize="sm"
+										fontWeight="medium"
+										lineHeight={1}
+										color={deadlineColor}
+									>
+										{task.start_date && (
+											<>{formatShortDate(new Date(task.start_date))} — </>
+										)}
+										{modifiers.deadline}
+									</Text>
+								</Box>
+							)}
+							{modifiers.description && <HiOutlineMenuAlt2 />}
+						</Box>
+						{hasAssignees && <AssigneeAvatars assignees={assignees!} />}
 					</Box>
 				)}
 			</Box>

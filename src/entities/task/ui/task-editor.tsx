@@ -277,7 +277,7 @@ export function TaskEditor({
 									/>,
 								)}
 								{Item(
-									"Срок",
+									"Дедлайн",
 									<DatetimePicker
 										value={task.end_date}
 										setValue={(v) => setTask((t) => ({ ...t, end_date: v }))}

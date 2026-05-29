@@ -7,7 +7,7 @@ export { ProjectsTable } from "./projects/table";
 export { ArchiveView } from "./archive-view";
 export { TagView } from "./tag-view";
 export { StatusView } from "./status-view";
-export { MemberView } from "./member-view";
+export { MemberView } from "./member-view/member-view";
 export { RoleView } from "./role-view";
 export { RootRedirect } from "./root-redirect";
 export { Loader } from "./loader";

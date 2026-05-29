@@ -2,6 +2,7 @@ import type { APIAdapter } from "../adapter";
 import type {
 	Color,
 	Datetime,
+	Error,
 	Username,
 	UUID,
 } from "../openapi/components/schemas";
@@ -10,8 +11,21 @@ import type { Member } from "../openapi/components/schemas";
 import { tokenStorage } from "../token-storage";
 import { HTTP } from "../status";
 
-export const delay = (ms: number) =>
-	new Promise((resolve) => setTimeout(resolve, ms));
+const err = (error: string) => (message?: string) => ({
+	error,
+	message: message ?? "",
+});
+
+const ERRORS = {
+	Unauthorized: {
+		error: "Ошибка авторизации",
+		message: "Войдите в аккаунт",
+	},
+	NotFound: err("Not Found"),
+	Conflict: err("Conflict"),
+	BadRequest: err("Bad Request"),
+	Forbidden: err("Forbidden"),
+};
 
 // ---------- Types matching DBML ----------
 type DBBaseUser = {
@@ -42,7 +56,16 @@ type DBProject = {
 
 type DBPermission = {
 	id: integer;
-	name: string;
+	name:
+		| "view_project"
+		| "manage_project"
+		| "manage_members"
+		| "manage_roles"
+		| "manage_columns"
+		| "manage_tasks"
+		| "manage_statuses"
+		| "manage_tags"
+		| "manage_assignees";
 	description?: string;
 };
 
@@ -115,6 +138,55 @@ type DBtask_tag = {
 	added_at: Datetime;
 };
 
+const PERMISSIONS: DBPermission[] = [
+	{
+		id: 1,
+		name: "view_project",
+		description: "Просматривать проект, его задачи и участников",
+	},
+	{
+		id: 2,
+		name: "manage_project",
+		description:
+			"Редактировать настройки проекта и управлять его конфигурацией",
+	},
+	{
+		id: 3,
+		name: "manage_members",
+		description: "Добавлять и удалять участников проекта",
+	},
+	{
+		id: 4,
+		name: "manage_roles",
+		description: "Создавать, изменять и назначать роли участникам",
+	},
+	{
+		id: 5,
+		name: "manage_columns",
+		description: "Создавать и редактировать колонки доски",
+	},
+	{
+		id: 6,
+		name: "manage_tasks",
+		description: "Создавать, редактировать и удалять задачи",
+	},
+	{
+		id: 7,
+		name: "manage_statuses",
+		description: "Добавлять и изменять статусы задач",
+	},
+	{
+		id: 8,
+		name: "manage_tags",
+		description: "Создавать и редактировать теги для задач",
+	},
+	{
+		id: 9,
+		name: "manage_assignees",
+		description: "Назначать и снимать исполнителей с задач",
+	},
+];
+
 type DB = {
 	baseUser: DBBaseUser[];
 	manualUser: DBManualUser[];
@@ -178,14 +250,6 @@ function withDB<T extends { db: DB | null }>(cb: (db: DB) => T): Omit<T, "db"> {
 	return rest;
 }
 
-const PERMISSIONS = {
-	MANAGE_PROJECT: "manage_project",
-	MANAGE_MEMBERS: "manage_members",
-	MANAGE_ROLES: "manage_roles",
-	EDIT_TASKS: "edit_tasks",
-	DELETE_TASKS: "delete_tasks",
-};
-
 function getInitialDB(): DB {
 	return {
 		baseUser: [],
@@ -196,39 +260,21 @@ function getInitialDB(): DB {
 		role: [
 			{
 				id: 1,
-				name: "Creator",
-				description: "Full project owner",
+				name: "Создатель",
+				description: "Создатель проекта, обладающий всеми разрешениями",
 			},
 		],
-		permission: [
-			{
-				id: 1,
-				name: PERMISSIONS.MANAGE_PROJECT,
-				description: "Edit/delete project",
-			},
-			{
-				id: 2,
-				name: PERMISSIONS.MANAGE_MEMBERS,
-				description: "Add/remove members",
-			},
-			{
-				id: 3,
-				name: PERMISSIONS.MANAGE_ROLES,
-				description: "Create/edit roles",
-			},
-			{
-				id: 4,
-				name: PERMISSIONS.EDIT_TASKS,
-				description: "Create/update tasks",
-			},
-			{ id: 5, name: PERMISSIONS.DELETE_TASKS, description: "Delete tasks" },
-		],
+		permission: PERMISSIONS,
 		role_permissions: [
 			{ role_id: 1, permission_id: 1 },
 			{ role_id: 1, permission_id: 2 },
 			{ role_id: 1, permission_id: 3 },
 			{ role_id: 1, permission_id: 4 },
 			{ role_id: 1, permission_id: 5 },
+			{ role_id: 1, permission_id: 6 },
+			{ role_id: 1, permission_id: 7 },
+			{ role_id: 1, permission_id: 8 },
+			{ role_id: 1, permission_id: 9 },
 		],
 		member: [],
 		column: [],
@@ -241,25 +287,37 @@ function getInitialDB(): DB {
 
 // ---------- Auth / Session ----------
 async function requireAuth(): Promise<
-	{ ok: true; user: DBBaseUser } | { ok: false }
+	{ ok: true; user: DBBaseUser } | { ok: false; error: Error }
 > {
 	const token = tokenStorage.get();
 	if (token === null) {
-		return { ok: false };
+		return {
+			ok: false,
+			error: {
+				error: "Token not found",
+				message: "Токен авторизации не найден",
+			},
+		};
 	}
 	const { user } = withDB((db) => {
 		const { userUUID } = withSessions((st) => ({ st, ...st[token] }));
 		return { db, user: db.baseUser.find((u) => u.uuid === userUUID) };
 	});
 	if (user === undefined) {
-		return { ok: false };
+		return {
+			ok: false,
+			error: {
+				error: "User not found",
+				message: "Пользователь не найден",
+			},
+		};
 	}
 	return { ok: true, user };
 }
 
 async function requireProjectAccess(
 	projectUUID: UUID,
-	requiredPermission?: string,
+	requiredPermission?: DBPermission["name"],
 ): Promise<
 	| { ok: true; project: DBProject; role_id: integer }
 	| {
@@ -268,16 +326,25 @@ async function requireProjectAccess(
 				| typeof HTTP.Unauthorized
 				| typeof HTTP.Forbidden
 				| typeof HTTP.NotFound;
+			error: Error;
 	  }
 > {
 	const auth = await requireAuth();
-	if (!auth.ok) return { ok: false, status: HTTP.Unauthorized };
+	if (!auth.ok)
+		return { ok: false, status: HTTP.Unauthorized, error: ERRORS.Unauthorized };
 	const { user } = auth;
 	return prom((resolve) => {
 		withDB((db) => {
 			const project = db.project.find((p) => p.uuid === projectUUID);
 			if (!project) {
-				resolve({ ok: false, status: HTTP.NotFound });
+				resolve({
+					ok: false,
+					status: HTTP.NotFound,
+					error: {
+						error: "Project not found",
+						message: "Запрашиваемый проект не найден",
+					},
+				});
 				return { db };
 			}
 
@@ -285,7 +352,14 @@ async function requireProjectAccess(
 				(m) => m.project_uuid === projectUUID && m.user_uuid === user.uuid,
 			);
 			if (!membership) {
-				resolve({ ok: false, status: HTTP.Forbidden });
+				resolve({
+					ok: false,
+					status: HTTP.Forbidden,
+					error: {
+						error: "Project access",
+						message: "Вы не являетесь участником данного проекта",
+					},
+				});
 				return { db };
 			}
 
@@ -296,7 +370,14 @@ async function requireProjectAccess(
 				const permIds = rolePerms.map((rp) => rp.permission_id);
 				const perms = db.permission.filter((p) => permIds.includes(p.id));
 				if (!perms.some((p) => p.name === requiredPermission)) {
-					resolve({ ok: false, status: HTTP.Forbidden });
+					resolve({
+						ok: false,
+						status: HTTP.Forbidden,
+						error: {
+							error: "Permission error",
+							message: `Вы не обладаете нужным разрешением: ${requiredPermission}`,
+						},
+					});
 					return { db };
 				}
 			}
@@ -323,19 +404,12 @@ const adjectives = [
 ];
 const nouns = ["fox", "hawk", "wolf", "bear", "lynx", "crow", "deer", "otter"];
 
-export function randomUsername(): string {
+function randomUsername(): string {
 	const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
 	const noun = nouns[Math.floor(Math.random() * nouns.length)];
 	const num = Math.floor(Math.random() * 1000);
 	return `${adj}_${noun}_${num}`;
 }
-
-const err = {
-	body: {
-		error: "",
-		message: "",
-	},
-};
 
 // ---------- API Adapter ----------
 export const Adapter: APIAdapter = {
@@ -415,7 +489,7 @@ export const Adapter: APIAdapter = {
 				if (res.ok) {
 					return { status: HTTP.OK };
 				}
-				return { status: HTTP.Unauthorized, ...err };
+				return { status: HTTP.Unauthorized, body: res.error };
 			}),
 
 		Exchange: async ({ token }) => {
@@ -489,12 +563,12 @@ export const Adapter: APIAdapter = {
 		Get: async () => {
 			const res = await requireAuth();
 			if (res.ok) return { status: HTTP.OK, body: res.user };
-			return { status: HTTP.Unauthorized, ...err };
+			return { status: HTTP.Unauthorized, body: res.error };
 		},
 
 		Update: async (req) => {
 			const res = await requireAuth();
-			if (!res.ok) return { status: HTTP.Unauthorized, ...err };
+			if (!res.ok) return { status: HTTP.Unauthorized, body: res.error };
 			return await prom((resolve) =>
 				withDB((db) => {
 					const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
@@ -538,7 +612,7 @@ export const Adapter: APIAdapter = {
 	User: {
 		Get: async ({ userUUID }) => {
 			const res = await requireAuth();
-			if (!res.ok) return { status: HTTP.Unauthorized, ...err };
+			if (!res.ok) return { status: HTTP.Unauthorized, body: res.error };
 			const { user } = withDB((db) => ({
 				db,
 				user: db.baseUser.find((u) => u.uuid === userUUID),
@@ -567,7 +641,7 @@ export const Adapter: APIAdapter = {
 								return { db };
 							}),
 						)
-					: { status: HTTP.Unauthorized, ...err },
+					: { status: HTTP.Unauthorized, body: res.error },
 			),
 
 		Create: (req) =>
@@ -596,68 +670,78 @@ export const Adapter: APIAdapter = {
 								return { db };
 							}),
 						)
-					: { status: HTTP.Unauthorized, ...err },
+					: { status: HTTP.Unauthorized, body: res.error },
 			),
 
 		Get: ({ projectUUID }) =>
-			requireProjectAccess(projectUUID).then((res) =>
+			requireProjectAccess(projectUUID, "view_project").then((res) =>
 				res.ok
 					? { status: HTTP.OK, body: structuredClone(res.project) }
-					: { status: res.status, ...err },
+					: { status: res.status, body: res.error },
 			),
 
 		Update: ({ projectUUID, ...update }) =>
-			requireProjectAccess(projectUUID, PERMISSIONS.MANAGE_PROJECT).then(
-				(res) => {
-					if (!res.ok) return { status: res.status, ...err };
-					return prom((resolve) =>
-						withDB((db) => {
-							const project = db.project.find((p) => p.uuid === projectUUID)!;
-							project.title = update.title;
-							project.description = update.description ?? undefined;
-							project.updated_at = now();
-							resolve({ status: HTTP.OK, body: structuredClone(project) });
-							return { db };
-						}),
-					);
-				},
-			),
+			requireProjectAccess(projectUUID, "manage_project").then((res) => {
+				if (!res.ok) return { status: res.status, body: res.error };
+				return prom((resolve) =>
+					withDB((db) => {
+						const project = db.project.find((p) => p.uuid === projectUUID)!;
+						project.title = update.title;
+						project.description = update.description ?? undefined;
+						project.updated_at = now();
+						resolve({ status: HTTP.OK, body: structuredClone(project) });
+						return { db };
+					}),
+				);
+			}),
 
-		Delete: ({ projectUUID }) =>
-			requireProjectAccess(projectUUID, PERMISSIONS.MANAGE_PROJECT).then(
-				(res) => {
-					if (!res.ok) return { status: res.status, ...err };
-					return prom((resolve) =>
-						withDB((db) => {
-							const colIds = db.column
-								.filter((c) => c.project_uuid === projectUUID)
-								.map((c) => c.id);
-							db.tasks = db.tasks.filter(
-								(t) =>
-									t.column_id === undefined || !colIds.includes(t.column_id),
-							);
-							db.column = db.column.filter(
-								(c) => c.project_uuid !== projectUUID,
-							);
-							db.member = db.member.filter(
-								(m) => m.project_uuid !== projectUUID,
-							);
-							db.tag = db.tag.filter((t) => t.project_uuid !== projectUUID);
-							db.role = db.role.filter(
-								(r) => !(r.project_uuid && r.project_uuid === projectUUID),
-							);
-							db.project = db.project.filter((p) => p.uuid !== projectUUID);
-							resolve({ status: HTTP.NoContent });
-							return { db };
-						}),
-					);
-				},
-			),
+		Delete: async ({ projectUUID }) => {
+			const res = await requireAuth();
+			if (!res.ok)
+				return { status: HTTP.Unauthorized, body: ERRORS.Unauthorized };
 
+			const { member } = withDB((db) => ({
+				db,
+				member: db.member.find(
+					(m) =>
+						m.user_uuid === res.user.uuid && m.project_uuid === projectUUID,
+				),
+			}));
+			if (member === undefined)
+				return {
+					status: HTTP.Forbidden,
+					body: ERRORS.Forbidden("Вы не являетесь участником проекта"),
+				};
+
+			// Удалить / выйти
+			if (member.role_id === 1) {
+				withDB((db) => {
+					const colIds = db.column
+						.filter((c) => c.project_uuid === projectUUID)
+						.map((c) => c.id);
+					db.tasks = db.tasks.filter(
+						(t) => t.column_id === undefined || !colIds.includes(t.column_id),
+					);
+					db.column = db.column.filter((c) => c.project_uuid !== projectUUID);
+					db.member = db.member.filter((m) => m.project_uuid !== projectUUID);
+					db.tag = db.tag.filter((t) => t.project_uuid !== projectUUID);
+					db.role = db.role.filter(
+						(r) => !(r.project_uuid && r.project_uuid === projectUUID),
+					);
+					db.project = db.project.filter((p) => p.uuid !== projectUUID);
+					return { db };
+				});
+				return { status: HTTP.NoContent };
+			}
+			return Adapter.Project.Members.Delete({
+				projectUUID,
+				userUUID: res.user.uuid,
+			});
+		},
 		Columns: {
 			GetAll: ({ projectUUID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const columns = db.column
@@ -670,31 +754,29 @@ export const Adapter: APIAdapter = {
 				}),
 
 			Create: ({ projectUUID, ...create }) =>
-				requireProjectAccess(projectUUID, PERMISSIONS.MANAGE_PROJECT).then(
-					(res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const cols = db.column.filter(
-									(c) => c.project_uuid === projectUUID,
-								);
-								const newCol: DBColumn = {
-									id: nextId(db.column),
-									project_uuid: projectUUID,
-									position: cols.length,
-									name: create.name,
-									created_at: now(),
-								};
-								db.column.push(newCol);
-								resolve({
-									status: HTTP.Created,
-									body: structuredClone(newCol),
-								});
-								return { db };
-							}),
-						);
-					},
-				),
+				requireProjectAccess(projectUUID, "manage_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					return prom((resolve) =>
+						withDB((db) => {
+							const cols = db.column.filter(
+								(c) => c.project_uuid === projectUUID,
+							);
+							const newCol: DBColumn = {
+								id: nextId(db.column),
+								project_uuid: projectUUID,
+								position: cols.length,
+								name: create.name,
+								created_at: now(),
+							};
+							db.column.push(newCol);
+							resolve({
+								status: HTTP.Created,
+								body: structuredClone(newCol),
+							});
+							return { db };
+						}),
+					);
+				}),
 
 			Get: ({ columnID }) =>
 				prom((resolve) => {
@@ -706,9 +788,9 @@ export const Adapter: APIAdapter = {
 						resolve({ status: HTTP.NotFound });
 						return;
 					}
-					requireProjectAccess(col.project_uuid).then((res) => {
+					requireProjectAccess(col.project_uuid, "view_project").then((res) => {
 						if (res.ok) resolve({ status: HTTP.OK, body: col });
-						else resolve({ status: res.status, ...err });
+						else resolve({ status: res.status, body: res.error });
 					});
 				}),
 
@@ -722,21 +804,20 @@ export const Adapter: APIAdapter = {
 						resolve({ status: HTTP.NotFound });
 						return;
 					}
-					requireProjectAccess(
-						col.project_uuid,
-						PERMISSIONS.MANAGE_PROJECT,
-					).then((res) => {
-						if (!res.ok) {
-							resolve({ status: res.status, ...err });
-							return;
-						}
-						withDB((db) => {
-							const c = db.column.find((c) => c.id === columnID)!;
-							c.name = update.name;
-							resolve({ status: HTTP.OK, body: structuredClone(c) });
-							return { db };
-						});
-					});
+					requireProjectAccess(col.project_uuid, "manage_columns").then(
+						(res) => {
+							if (!res.ok) {
+								resolve({ status: res.status, body: res.error });
+								return;
+							}
+							withDB((db) => {
+								const c = db.column.find((c) => c.id === columnID)!;
+								c.name = update.name;
+								resolve({ status: HTTP.OK, body: structuredClone(c) });
+								return { db };
+							});
+						},
+					);
 				}),
 
 			Move: ({ columnID, direction }) =>
@@ -751,10 +832,10 @@ export const Adapter: APIAdapter = {
 					}
 					const res = await requireProjectAccess(
 						col.project_uuid,
-						PERMISSIONS.MANAGE_PROJECT,
+						"manage_columns",
 					);
 					if (!res.ok) {
-						resolve({ status: res.status, ...err });
+						resolve({ status: res.status, body: res.error });
 						return;
 					}
 					const near = col.position + (direction === "right" ? 1 : -1);
@@ -793,10 +874,10 @@ export const Adapter: APIAdapter = {
 					}
 					const res = await requireProjectAccess(
 						col.project_uuid,
-						PERMISSIONS.MANAGE_PROJECT,
+						"manage_columns",
 					);
 					if (!res.ok) {
-						resolve({ status: res.status, ...err });
+						resolve({ status: res.status, body: res.error });
 						return;
 					}
 					withDB((db) => {
@@ -811,7 +892,11 @@ export const Adapter: APIAdapter = {
 							if (c.position <= col.position) return;
 							c.position -= 1;
 						});
-						db.tasks = db.tasks.filter((t) => t.column_id !== columnID);
+						const time = now();
+						db.tasks.forEach((task) => {
+							if (task.column_id !== columnID) return;
+							task.deleted_at = time;
+						});
 						resolve({ status: HTTP.NoContent });
 						return { db };
 					});
@@ -821,8 +906,8 @@ export const Adapter: APIAdapter = {
 		// ---------- Members ----------
 		Members: {
 			GetAll: ({ projectUUID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const memberships = db.member.filter(
@@ -840,73 +925,71 @@ export const Adapter: APIAdapter = {
 				}),
 
 			Create: ({ projectUUID, ...create }) =>
-				requireProjectAccess(projectUUID, PERMISSIONS.MANAGE_MEMBERS).then(
-					(res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const userExists = db.baseUser.some(
-									(u) => u.uuid === create.user_uuid,
-								);
-								if (!userExists) {
-									resolve({
-										status: HTTP.BadRequest,
-										body: {
-											error: "UserDoesNotExist",
-											message:
-												"Can't add user as a member because user with such id does not exist",
-										},
-									});
-									return { db };
-								}
-								const existing = db.member.find(
-									(m) =>
-										m.project_uuid === projectUUID &&
-										m.user_uuid === create.user_uuid,
-								);
-								if (existing) {
-									resolve({ status: HTTP.Conflict });
-									return { db };
-								}
-								const roleExists = db.role.some(
-									(r) =>
-										r.id === create.role_id &&
-										(r.project_uuid === projectUUID || !r.project_uuid),
-								);
-								if (!roleExists) {
-									resolve({
-										status: HTTP.BadRequest,
-										body: {
-											error: "RoleDoesNotExist",
-											message: "Role with such id does not exist",
-										},
-									});
-									return { db };
-								}
-								const newMembership: DBMember = {
-									project_uuid: projectUUID,
-									user_uuid: create.user_uuid,
-									role_id: create.role_id,
-									joined_at: now(),
-								};
-								db.member.push(newMembership);
-								const user = db.baseUser.find(
-									(u) => u.uuid === create.user_uuid,
-								)!;
-								const role = db.role.find((r) => r.id === create.role_id)!;
+				requireProjectAccess(projectUUID, "manage_members").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					return prom((resolve) =>
+						withDB((db) => {
+							const userExists = db.baseUser.some(
+								(u) => u.uuid === create.user_uuid,
+							);
+							if (!userExists) {
 								resolve({
-									status: HTTP.Created,
-									body: { ...user, ...newMembership, role_id: role.id },
+									status: HTTP.BadRequest,
+									body: {
+										error: "UserDoesNotExist",
+										message:
+											"Can't add user as a member because user with such id does not exist",
+									},
 								});
 								return { db };
-							}),
-						);
-					},
-				),
+							}
+							const existing = db.member.find(
+								(m) =>
+									m.project_uuid === projectUUID &&
+									m.user_uuid === create.user_uuid,
+							);
+							if (existing) {
+								resolve({ status: HTTP.Conflict });
+								return { db };
+							}
+							const roleExists = db.role.some(
+								(r) =>
+									r.id === create.role_id &&
+									(r.project_uuid === projectUUID || !r.project_uuid),
+							);
+							if (!roleExists) {
+								resolve({
+									status: HTTP.BadRequest,
+									body: {
+										error: "RoleDoesNotExist",
+										message: "Role with such id does not exist",
+									},
+								});
+								return { db };
+							}
+							const newMembership: DBMember = {
+								project_uuid: projectUUID,
+								user_uuid: create.user_uuid,
+								role_id: create.role_id,
+								joined_at: now(),
+							};
+							db.member.push(newMembership);
+							const user = db.baseUser.find(
+								(u) => u.uuid === create.user_uuid,
+							)!;
+							const role = db.role.find((r) => r.id === create.role_id)!;
+							resolve({
+								status: HTTP.Created,
+								body: { ...user, ...newMembership, role_id: role.id },
+							});
+							return { db };
+						}),
+					);
+				}),
 
 			Get: ({ projectUUID, userUUID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const m = db.member.find(
@@ -932,52 +1015,53 @@ export const Adapter: APIAdapter = {
 				}),
 
 			Update: ({ projectUUID, userUUID, ...update }) =>
-				requireProjectAccess(projectUUID, PERMISSIONS.MANAGE_MEMBERS).then(
-					(res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const m = db.member.find(
-									(m) =>
-										m.project_uuid === projectUUID && m.user_uuid === userUUID,
+				requireProjectAccess(projectUUID, "manage_members").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					return prom((resolve) =>
+						withDB((db) => {
+							const m = db.member.find(
+								(m) =>
+									m.project_uuid === projectUUID && m.user_uuid === userUUID,
+							);
+							if (!m) {
+								resolve({ status: HTTP.NotFound });
+								return { db };
+							}
+							if (update.role_id !== undefined) {
+								const roleExists = db.role.some(
+									(r) =>
+										r.id === update.role_id &&
+										(r.project_uuid === projectUUID || !r.project_uuid),
 								);
-								if (!m) {
-									resolve({ status: HTTP.NotFound });
+								if (!roleExists) {
+									resolve({
+										status: HTTP.BadRequest,
+										body: {
+											error: "Bad request",
+											message: "Роль существует",
+										},
+									});
 									return { db };
 								}
-								if (update.role_id !== undefined) {
-									const roleExists = db.role.some(
-										(r) =>
-											r.id === update.role_id &&
-											(r.project_uuid === projectUUID || !r.project_uuid),
-									);
-									if (!roleExists) {
-										resolve({ status: HTTP.BadRequest, ...err });
-										return { db };
-									}
-									m.role_id = update.role_id;
-								}
-								const user = db.baseUser.find((u) => u.uuid === userUUID)!;
-								const role = db.role.find((r) => r.id === m.role_id)!;
-								const apiMember: Member = {
-									...user,
-									project_uuid: m.project_uuid,
-									role_id: role.id,
-									joined_at: m.joined_at,
-								};
-								resolve({ status: HTTP.OK, body: apiMember });
-								return { db };
-							}),
-						);
-					},
-				),
+								m.role_id = update.role_id;
+							}
+							const user = db.baseUser.find((u) => u.uuid === userUUID)!;
+							const role = db.role.find((r) => r.id === m.role_id)!;
+							const apiMember: Member = {
+								...user,
+								project_uuid: m.project_uuid,
+								role_id: role.id,
+								joined_at: m.joined_at,
+							};
+							resolve({ status: HTTP.OK, body: apiMember });
+							return { db };
+						}),
+					);
+				}),
 
 			Delete: async ({ projectUUID, userUUID }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_MEMBERS,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_members");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const idx = db.member.findIndex(
@@ -998,8 +1082,8 @@ export const Adapter: APIAdapter = {
 
 		Statuses: {
 			GetAll: ({ projectUUID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							resolve({
@@ -1011,8 +1095,8 @@ export const Adapter: APIAdapter = {
 					);
 				}),
 			Create: ({ projectUUID, name }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "manage_statuses").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const newStatus: DBStatus = {
@@ -1028,20 +1112,24 @@ export const Adapter: APIAdapter = {
 					);
 				}),
 			Get: ({ projectUUID, statusID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "manage_statuses").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					const { status } = withDB((db) => ({
 						db,
 						status: db.statuses.find(
 							(s) => s.id === statusID && s.project_uuid === projectUUID,
 						),
 					}));
-					if (status === undefined) return { status: HTTP.NotFound, ...err };
+					if (status === undefined)
+						return {
+							status: HTTP.NotFound,
+							body: ERRORS.NotFound("Статус не найден"),
+						};
 					return { status: HTTP.OK, body: status };
 				}),
 			Update: ({ projectUUID, statusID, ...update }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "manage_statuses").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					const { newStatus } = withDB((db) => {
 						const status = db.statuses.find(
 							(s) => s.id === statusID && s.project_uuid === projectUUID,
@@ -1050,23 +1138,29 @@ export const Adapter: APIAdapter = {
 						status.name = update.name;
 						return { db, newStatus: status };
 					});
-					if (newStatus === undefined) return { status: HTTP.NotFound, ...err };
+					if (newStatus === undefined)
+						return {
+							status: HTTP.NotFound,
+							body: ERRORS.NotFound("Статус не найден"),
+						};
 					return { status: HTTP.OK, body: newStatus };
 				}),
 			Delete: ({ projectUUID, statusID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "manage_statuses").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const idx = db.statuses.findIndex(
 								(s) => s.project_uuid === projectUUID && s.id === statusID,
 							);
 							if (idx === -1) {
-								resolve({ status: HTTP.NotFound, ...err });
+								resolve({
+									status: HTTP.NotFound,
+								});
 								return { db };
 							}
 							if (db.tasks.some((t) => t.status_id === statusID)) {
-								resolve({ status: HTTP.Conflict, ...err });
+								resolve({ status: HTTP.Conflict });
 								return { db };
 							}
 							db.statuses.splice(idx, 1);
@@ -1080,8 +1174,8 @@ export const Adapter: APIAdapter = {
 		// ---------- Tasks ----------
 		Tasks: {
 			GetAll: ({ projectUUID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							resolve({
@@ -1096,31 +1190,29 @@ export const Adapter: APIAdapter = {
 			Create: ({ projectUUID, ...rest }) =>
 				requireAuth().then((auth) =>
 					auth.ok
-						? requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
-								(res) => {
-									if (!res.ok) return { status: res.status, ...err };
-									return prom((resolve) =>
-										withDB((db) => {
-											const newTask: DBTask = {
-												id: nextId(db.tasks),
-												creator_uuid: auth.user.uuid,
-												created_at: now(),
-												updated_at: now(),
-												...rest,
-											};
-											db.tasks.push(newTask);
-											resolve({ status: HTTP.Created, body: newTask });
-											return { db };
-										}),
-									);
-								},
-							)
-						: { status: HTTP.Unauthorized, ...err },
+						? requireProjectAccess(projectUUID, "manage_tasks").then((res) => {
+								if (!res.ok) return { status: res.status, body: res.error };
+								return prom((resolve) =>
+									withDB((db) => {
+										const newTask: DBTask = {
+											id: nextId(db.tasks),
+											creator_uuid: auth.user.uuid,
+											created_at: now(),
+											updated_at: now(),
+											...rest,
+										};
+										db.tasks.push(newTask);
+										resolve({ status: HTTP.Created, body: newTask });
+										return { db };
+									}),
+								);
+							})
+						: { status: HTTP.Unauthorized, body: auth.error },
 				),
 
 			Get: ({ projectUUID, taskID }) =>
-				requireProjectAccess(projectUUID).then((res) => {
-					if (!res.ok) return { status: res.status, ...err };
+				requireProjectAccess(projectUUID, "view_project").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
@@ -1135,63 +1227,62 @@ export const Adapter: APIAdapter = {
 				}),
 
 			Update: ({ projectUUID, taskID, ...update }) =>
-				requireProjectAccess(projectUUID, PERMISSIONS.EDIT_TASKS).then(
-					async (res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const task = db.tasks.find((t) => t.id === taskID);
-								if (task === undefined || task.deleted_at !== undefined) {
-									resolve({ status: HTTP.NotFound });
-									return { db };
-								}
-								task.title = update.title ?? undefined;
-								task.status_id = update.status_id ?? undefined;
-								task.description = update.description ?? undefined;
-								task.start_date = update.start_date ?? undefined;
-								task.end_date = update.end_date ?? undefined;
-
-								const newCol = db.column.find(
-									(c) =>
-										c.id === update.column_id && c.project_uuid === projectUUID,
-								);
-								if (newCol === undefined) {
-									resolve({ status: HTTP.BadRequest, ...err });
-									return { db };
-								}
-								task.column_id = update.column_id;
-
-								task.archived_at = update.archived
-									? task.archived_at === undefined
-										? now()
-										: task.archived_at
-									: undefined;
-								task.updated_at = now();
-								resolve({ status: HTTP.OK, body: task });
+				requireProjectAccess(projectUUID, "manage_tasks").then(async (res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					return prom((resolve) =>
+						withDB((db) => {
+							const task = db.tasks.find((t) => t.id === taskID);
+							if (task === undefined || task.deleted_at !== undefined) {
+								resolve({ status: HTTP.NotFound });
 								return { db };
-							}),
-						);
-					},
-				),
+							}
+							task.title = update.title ?? undefined;
+							task.status_id = update.status_id ?? undefined;
+							task.description = update.description ?? undefined;
+							task.start_date = update.start_date ?? undefined;
+							task.end_date = update.end_date ?? undefined;
+
+							const newCol = db.column.find(
+								(c) =>
+									c.id === update.column_id && c.project_uuid === projectUUID,
+							);
+							if (newCol === undefined) {
+								resolve({
+									status: HTTP.BadRequest,
+									body: ERRORS.BadRequest("Колонка не найдена"),
+								});
+								return { db };
+							}
+							task.column_id = update.column_id;
+
+							task.archived_at = update.archived
+								? task.archived_at === undefined
+									? now()
+									: task.archived_at
+								: undefined;
+							task.updated_at = now();
+							resolve({ status: HTTP.OK, body: task });
+							return { db };
+						}),
+					);
+				}),
 
 			Delete: ({ projectUUID, taskID }) =>
-				requireProjectAccess(projectUUID, PERMISSIONS.DELETE_TASKS).then(
-					(res) => {
-						if (!res.ok) return { status: res.status, ...err };
-						return prom((resolve) =>
-							withDB((db) => {
-								const task = db.tasks.find((t) => t.id === taskID);
-								if (task === undefined || task.deleted_at !== undefined) {
-									resolve({ status: HTTP.NotFound });
-									return { db };
-								}
-								task.deleted_at = now();
-								resolve({ status: HTTP.NoContent });
+				requireProjectAccess(projectUUID, "manage_tasks").then((res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					return prom((resolve) =>
+						withDB((db) => {
+							const task = db.tasks.find((t) => t.id === taskID);
+							if (task === undefined || task.deleted_at !== undefined) {
+								resolve({ status: HTTP.NotFound });
 								return { db };
-							}),
-						);
-					},
-				),
+							}
+							task.deleted_at = now();
+							resolve({ status: HTTP.NoContent });
+							return { db };
+						}),
+					);
+				}),
 
 			Tags: {
 				GetAll: async ({ projectUUID, taskID }) => {
@@ -1201,8 +1292,8 @@ export const Adapter: APIAdapter = {
 					}));
 					if (task === undefined || task.deleted_at !== undefined)
 						return { status: HTTP.NotFound };
-					const res = await requireProjectAccess(projectUUID);
-					if (!res.ok) return { status: res.status, ...err };
+					const res = await requireProjectAccess(projectUUID, "view_project");
+					if (!res.ok) return { status: res.status, body: res.error };
 
 					const { tags } = withDB((db) => {
 						const tagIds = db.task_tag
@@ -1220,11 +1311,8 @@ export const Adapter: APIAdapter = {
 					}));
 					if (task === undefined || task.deleted_at !== undefined)
 						return { status: HTTP.NotFound };
-					const res = await requireProjectAccess(
-						projectUUID,
-						PERMISSIONS.EDIT_TASKS,
-					);
-					if (!res.ok) return { status: res.status, ...err };
+					const res = await requireProjectAccess(projectUUID, "manage_tasks");
+					if (!res.ok) return { status: res.status, body: res.error };
 					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
@@ -1264,11 +1352,8 @@ export const Adapter: APIAdapter = {
 					}));
 					if (task === undefined || task.deleted_at !== undefined)
 						return { status: HTTP.NotFound };
-					const res = await requireProjectAccess(
-						projectUUID,
-						PERMISSIONS.EDIT_TASKS,
-					);
-					if (!res.ok) return { status: res.status, ...err };
+					const res = await requireProjectAccess(projectUUID, "manage_tasks");
+					if (!res.ok) return { status: res.status, body: res.error };
 					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
@@ -1295,8 +1380,8 @@ export const Adapter: APIAdapter = {
 		// ---------- Assignees ----------
 		Assignees: {
 			GetAll: async ({ projectUUID, taskID }) => {
-				const res = await requireProjectAccess(projectUUID);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "view_project");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
@@ -1314,11 +1399,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Create: async ({ projectUUID, taskID, user_uuid }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.EDIT_TASKS,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_assignees");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
@@ -1331,7 +1413,12 @@ export const Adapter: APIAdapter = {
 								m.project_uuid === projectUUID && m.user_uuid === user_uuid,
 						);
 						if (!isMember) {
-							resolve({ status: HTTP.BadRequest, ...err });
+							resolve({
+								status: HTTP.BadRequest,
+								body: ERRORS.BadRequest(
+									"Пользователь не является учатсником проекта",
+								),
+							});
 							return { db };
 						}
 						const existing = db.assignee.find(
@@ -1354,11 +1441,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Delete: async ({ projectUUID, taskID, userUUID }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.EDIT_TASKS,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_assignees");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
@@ -1384,8 +1468,8 @@ export const Adapter: APIAdapter = {
 		// ---------- Tags (Project-level) ----------
 		Tags: {
 			GetAll: async ({ projectUUID }) => {
-				const res = await requireProjectAccess(projectUUID);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "view_project");
+				if (!res.ok) return { status: res.status, body: res.error };
 				const { tags } = withDB((db) => {
 					const tags = db.tag.filter((t) => t.project_uuid === projectUUID);
 					return { db, tags };
@@ -1394,11 +1478,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Create: async ({ projectUUID, ...create }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_PROJECT,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_tags");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const newTag: DBTag = {
@@ -1416,11 +1497,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Update: async ({ projectUUID, tagID, ...update }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_PROJECT,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_tags");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const tag = db.tag.find(
@@ -1439,11 +1517,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Delete: async ({ projectUUID, tagID }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_PROJECT,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_tags");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const idx = db.tag.findIndex(
@@ -1465,8 +1540,8 @@ export const Adapter: APIAdapter = {
 		// ---------- Roles ----------
 		Roles: {
 			GetAll: async ({ projectUUID }) => {
-				const res = await requireProjectAccess(projectUUID);
-				if (!res.ok) return { status: HTTP.Forbidden, ...err };
+				const res = await requireProjectAccess(projectUUID, "view_project");
+				if (!res.ok) return { status: HTTP.Forbidden, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const roles = db.role.filter(
@@ -1480,11 +1555,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Create: async ({ projectUUID, ...create }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_ROLES,
-				);
-				if (!res.ok) return { status: HTTP.Forbidden, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_roles");
+				if (!res.ok) return { status: HTTP.Forbidden, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const newRole: DBRole = {
@@ -1501,8 +1573,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Get: async ({ projectUUID, roleID }) => {
-				const res = await requireProjectAccess(projectUUID);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "view_project");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const role = db.role.find(
@@ -1522,11 +1594,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Update: async ({ projectUUID, roleID, ...update }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_ROLES,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_roles");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const role = db.role.find(
@@ -1540,6 +1609,27 @@ export const Adapter: APIAdapter = {
 						}
 						role.name = update.name;
 						role.description = update.description ?? undefined;
+						const curPermIds = db.role_permissions
+							.filter((rp) => rp.role_id === roleID)
+							.map((rp) => rp.permission_id);
+						const curPermIdsSet = new Set(curPermIds);
+						const newPermIdsSet = new Set(update.permission_ids);
+						const toAdd = update.permission_ids.filter(
+							(id) => !curPermIdsSet.has(id),
+						);
+						const toRemove = new Set(
+							curPermIds.filter((id) => !newPermIdsSet.has(id)),
+						);
+						db.role_permissions = db.role_permissions.filter(
+							(rp) =>
+								!(rp.role_id === roleID && toRemove.has(rp.permission_id)),
+						);
+						toAdd.forEach((id) =>
+							db.role_permissions.push({
+								role_id: roleID,
+								permission_id: id,
+							}),
+						);
 						resolve({ status: HTTP.OK, body: role });
 						return { db };
 					}),
@@ -1547,11 +1637,8 @@ export const Adapter: APIAdapter = {
 			},
 
 			Delete: async ({ projectUUID, roleID }) => {
-				const res = await requireProjectAccess(
-					projectUUID,
-					PERMISSIONS.MANAGE_ROLES,
-				);
-				if (!res.ok) return { status: res.status, ...err };
+				const res = await requireProjectAccess(projectUUID, "manage_roles");
+				if (!res.ok) return { status: res.status, body: res.error };
 				return prom((resolve) =>
 					withDB((db) => {
 						const idx = db.role.findIndex(
@@ -1583,8 +1670,8 @@ export const Adapter: APIAdapter = {
 
 			Permissions: {
 				GetAll: async ({ projectUUID, roleID }) => {
-					const res = await requireProjectAccess(projectUUID);
-					if (!res.ok) return { status: res.status, ...err };
+					const res = await requireProjectAccess(projectUUID, "view_project");
+					if (!res.ok) return { status: res.status, body: res.error };
 					return prom((resolve) =>
 						withDB((db) => {
 							const role = db.role.find(
@@ -1608,6 +1695,24 @@ export const Adapter: APIAdapter = {
 					);
 				},
 			},
+		},
+	},
+	Permissions: {
+		GetAll: async () => {
+			const res = await requireAuth();
+			if (!res.ok)
+				return {
+					status: 401,
+					body: ERRORS.Unauthorized,
+				};
+			const { permissions } = withDB((db) => ({
+				db,
+				permissions: db.permission,
+			}));
+			return {
+				status: 200,
+				body: permissions,
+			};
 		},
 	},
 };
