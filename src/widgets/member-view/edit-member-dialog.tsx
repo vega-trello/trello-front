@@ -3,30 +3,30 @@ import {
 	createListCollection,
 	Dialog,
 	HStack,
-	Input,
 	Portal,
 	Select,
 } from "@chakra-ui/react";
-import type { Role, UUID } from "../../shared/api/openapi/components/schemas";
+import type { Member, Role } from "../../shared/api/openapi/components/schemas";
 import { useCallback, useMemo, useState, type PropsWithChildren } from "react";
 import { useRoles } from "../../entities/role";
 import { ErrorAlert } from "../error-alert";
 import { Loader } from "../loader";
-import { useCreateMember } from "../../entities/member/model/use-member-mutations";
+import { useUpdateMember } from "../../entities/member/model/use-member-mutations";
 import { errorMessage, toaster } from "../../shared";
 
-export type CreateMemberDialogProps = {
-	projectUUID: UUID;
+export type EditMemberDialogProps = {
+	member: Member;
 } & PropsWithChildren;
 
-export function CreateMemberDialog({
-	projectUUID,
-	children,
-}: CreateMemberDialogProps) {
-	const { data: roles, isPending, isError, error } = useRoles(projectUUID);
-	const [uuid, setUUID] = useState("");
-	const [role, setRole] = useState<string | undefined>(undefined);
-	const createMember = useCreateMember();
+export function EditMemberDialog({ member, children }: EditMemberDialogProps) {
+	const {
+		data: roles,
+		isPending,
+		isError,
+		error,
+	} = useRoles(member.project_uuid);
+	const [role, setRole] = useState<string>(member.role_id.toString());
+	const updateMember = useUpdateMember();
 
 	const collection = useMemo(
 		() =>
@@ -38,26 +38,19 @@ export function CreateMemberDialog({
 		[roles],
 	);
 
-	const handleCreate = useCallback(() => {
-		if (role === undefined) {
-			toaster.error({
-				title: "Ошибка",
-				description: "Роль не выбрана",
-			});
-			return;
-		}
+	const handleUpdate = useCallback(() => {
 		const roleID = parseInt(role);
-		createMember.mutate(
+		updateMember.mutate(
 			{
-				projectUUID,
+				projectUUID: member.project_uuid,
+				userUUID: member.uuid,
 				role_id: roleID,
-				user_uuid: uuid,
 			},
 			{
 				onError: (err) => toaster.error(errorMessage(err)),
 			},
 		);
-	}, [uuid, role, projectUUID, createMember]);
+	}, [member, role, updateMember]);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isPending) return <Loader size="lg" />;
@@ -70,15 +63,18 @@ export function CreateMemberDialog({
 					<Dialog.Backdrop />
 					<Dialog.Content>
 						<Dialog.Header>
-							<Dialog.Title>Добавление участника</Dialog.Title>
+							<Dialog.Title>
+								Изменение роли участника {member.username}
+							</Dialog.Title>
 						</Dialog.Header>
 						<Dialog.Body>
 							<HStack>
-								<Input value={uuid} onChange={(e) => setUUID(e.target.value)} />
 								<Select.Root
 									collection={collection}
 									value={role !== undefined ? [role] : []}
-									onValueChange={(e) => setRole(e.value.at(0))}
+									onValueChange={(e) =>
+										e.value[0] !== undefined && setRole(e.value[0])
+									}
 								>
 									<Select.HiddenSelect />
 									<Select.Control>
@@ -106,8 +102,8 @@ export function CreateMemberDialog({
 						</Dialog.Body>
 						<Dialog.Footer>
 							<Dialog.ActionTrigger asChild>
-								<Button loading={createMember.isPending} onClick={handleCreate}>
-									Добавить
+								<Button loading={updateMember.isPending} onClick={handleUpdate}>
+									Сохранить
 								</Button>
 							</Dialog.ActionTrigger>
 						</Dialog.Footer>

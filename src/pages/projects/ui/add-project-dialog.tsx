@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, type PropsWithChildren } from "react";
 import { toaster } from "../../../shared";
 import {
 	Button,
@@ -14,7 +14,7 @@ import { useCreateProject } from "../../../entities/project";
 import type { CreateProject } from "../../../shared/api/openapi/components/schemas";
 import { errorMessage } from "../../../shared";
 
-export function AddProjectButton() {
+export function AddProjectDialog({ children }: PropsWithChildren) {
 	const ref = useRef<HTMLInputElement | null>(null);
 	const [title, setTitle] = useState("");
 	const titleSyms = Array.from(title).length.toString();
@@ -28,26 +28,26 @@ export function AddProjectButton() {
 		if (desc !== "") data.description = desc;
 
 		createProject.mutate(data, {
-			onSuccess() {
-				setTitle("");
-				setDesc("");
-			},
 			onError(err) {
 				toaster.error(errorMessage(err));
 			},
 		});
 	}, [title, desc, createProject]);
 
+	const handleClose = useCallback(() => {
+		setTitle("");
+		setDesc("");
+	}, [setTitle, setDesc]);
+
 	return (
 		<Dialog.Root
 			initialFocusEl={() => ref.current}
+			onOpenChange={(e) => !e.open && handleClose}
 			motionPreset="slide-in-bottom"
 			placement="center"
 		>
 			<Dialog.Trigger asChild>
-				<Button id="add-project" variant="solid">
-					Добавить
-				</Button>
+				{children}
 			</Dialog.Trigger>
 			<Portal>
 				<Dialog.Backdrop />

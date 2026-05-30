@@ -14,38 +14,12 @@ import {
 import { errorMessage, toaster, useTitle } from "../../../shared";
 import { useSelf } from "../../../entities/user";
 import { ErrorAlert, Loader } from "../../../widgets";
-import { createFormDialog } from "../../../shared/ui/form-dialog";
 import { useUpdateSelf } from "../../../entities/user/model/use-user-mutations";
 import { useCallback, useState, type PropsWithChildren } from "react";
 import type {
 	SelfUser,
 	UpdateUser,
 } from "../../../shared/api/openapi/components/schemas";
-
-const updateDialog = createFormDialog<{
-	username: "";
-	password: "";
-	old_password: "";
-}>({
-	title: "Изменить пользователя",
-	fields: {
-		username: {
-			type: "text",
-			label: "Новое имя",
-			placeholder: "Оставтье пустым чтобы не менять",
-		},
-		password: {
-			type: "password",
-			label: "Новый пароль",
-			placeholder: "Оставтье пустым чтобы не менять",
-		},
-		old_password: {
-			type: "password",
-			label: "Текущий пароль",
-			placeholder: "Введите текущий пароль для подтверждения",
-		},
-	},
-});
 
 function UpdateDialog({
 	user,
@@ -140,7 +114,6 @@ export function Page() {
 
 	return (
 		<Box display="flex" justifyContent="center" padding="8">
-			<updateDialog.Viewport />
 			<Box w="100%" maxW="640px" display="flex" flexDirection="column" gap="6">
 				<Field.Root>
 					<Field.Label>Идентификатор пользователя</Field.Label>

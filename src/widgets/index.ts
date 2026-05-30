@@ -4,7 +4,7 @@ export { Header } from "./header/header";
 export { Sidebar } from "./sidebar";
 export { ProjectsCards } from "./projects/cards";
 export { ProjectsTable } from "./projects/table";
-export { ArchiveView } from "./archive-view";
+export { ArchiveView } from "./archive-view/archive-view";
 export { TagView } from "./tag-view";
 export { StatusView } from "./status-view";
 export { MemberView } from "./member-view/member-view";

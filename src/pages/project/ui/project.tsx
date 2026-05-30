@@ -4,7 +4,7 @@ import { FaTableColumns } from "react-icons/fa6";
 import type { Project } from "../../../shared/api/openapi/components/schemas";
 import { useProject } from "../../../entities/project";
 import { useSetHeading } from "../../../shared";
-import { FaInfo, FaTags } from "react-icons/fa";
+import { FaCheck, FaTags } from "react-icons/fa";
 import "./project.css";
 import {
 	ArchiveView,
@@ -82,7 +82,7 @@ export function Project() {
 						{TabL(
 							"status",
 							<>
-								<FaInfo />
+								<FaCheck />
 								Статусы
 							</>,
 						)}

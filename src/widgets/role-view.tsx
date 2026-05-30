@@ -106,7 +106,6 @@ export function RoleView({ projectUUID }: { projectUUID: UUID }) {
 					</Box>
 					<Button
 						size="sm"
-						colorScheme="blue"
 						onClick={handleCreate}
 						loading={createRole.isPending}
 					>

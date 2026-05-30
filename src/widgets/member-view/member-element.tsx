@@ -7,6 +7,7 @@ import { HiOutlinePencilAlt, HiOutlineTrash } from "react-icons/hi";
 import { deleteDialog } from "./delete-dialog";
 import { useSelf } from "../../entities/user";
 import { useRole } from "../../entities/role";
+import { EditMemberDialog } from "./edit-member-dialog";
 
 type MemberElementProps = {
 	member: Member;
@@ -30,7 +31,7 @@ export function MemberElement({ member }: MemberElementProps) {
 	}, [deleteMember, member]);
 
 	return (
-		<Box display="flex" alignItems="center" justifyContent="space-between">
+		<Box display="flex" alignItems="center" justifyContent="space-between" height='42px'>
 			<Box
 				display="flex"
 				flexDirection="column"
@@ -53,11 +54,11 @@ export function MemberElement({ member }: MemberElementProps) {
 			</Box>
 			{!isSelf && (
 				<Box>
-					{/* <TagEdit projectUUID={projectUUID} tag={tag}> */}
-					<IconButton variant="ghost">
-						<HiOutlinePencilAlt />
-					</IconButton>
-					{/* </TagEdit> */}
+					<EditMemberDialog member={member}>
+						<IconButton variant="ghost">
+							<HiOutlinePencilAlt />
+						</IconButton>
+					</EditMemberDialog>
 					<IconButton
 						loading={deleteMember.isPending}
 						variant="ghost"

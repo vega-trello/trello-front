@@ -95,6 +95,7 @@ export type APIAdapter = {
 		) => Responses<{
 			[HTTP.OK]: Response<SelfUser>;
 			[HTTP.Unauthorized]: Unauthorized;
+			[HTTP.Forbidden]: Forbidden;
 		}>;
 
 		Update: (

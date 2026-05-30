@@ -18,7 +18,13 @@ import type {
 	UUID,
 } from "../../../shared/api/openapi/components/schemas";
 import { useCallback, useRef, useState, type PropsWithChildren } from "react";
-import { HiOutlineMenuAlt2, HiOutlineTag } from "react-icons/hi";
+import {
+	HiOutlineCalendar,
+	HiOutlineCheck,
+	HiOutlineMenuAlt2,
+	HiOutlineTag,
+} from "react-icons/hi";
+import { HiOutlineViewColumns } from "react-icons/hi2";
 import { useAttachTag, useDetachTag, useUpdateTask } from "../";
 import { toaster, errorMessage } from "../../../shared";
 import { useUser } from "../../user";
@@ -29,6 +35,7 @@ import { AddTagPopover } from "./add-tag-popover";
 import { AssigneesView } from "./assignees-view";
 import { MdAdd } from "react-icons/md";
 import { useAddAssignee, useRemoveAssignee } from "../../assignee";
+import { ColumnSelect } from "./column-select";
 
 function Item(label: React.ReactNode, value: React.ReactNode) {
 	return (
@@ -246,17 +253,33 @@ export function TaskEditor({
 									</Box>,
 								)}
 								{Item(
-									"Статус",
+									<>
+										<HiOutlineCheck />
+										Статус
+									</>,
 									<StatusSelect
 										projectUUID={projectUUID}
 										value={task.status_id?.toString()}
 										setValue={(v) =>
-											setTask((t) => {
-												return {
-													...t,
-													status_id: v === undefined ? undefined : parseInt(v),
-												};
-											})
+											setTask((t) => ({
+												...t,
+												status_id: v === undefined ? undefined : parseInt(v),
+											}))
+										}
+									/>,
+								)}
+								{Item(
+									<>
+										<HiOutlineViewColumns /> Колонка
+									</>,
+									<ColumnSelect
+										projectUUID={projectUUID}
+										value={task.column_id.toString()}
+										setValue={(v) =>
+											setTask((t) => ({
+												...t,
+												column_id: parseInt(v),
+											}))
 										}
 									/>,
 								)}
@@ -270,14 +293,20 @@ export function TaskEditor({
 									/>,
 								)}
 								{Item(
-									"Начало",
+									<>
+										<HiOutlineCalendar />
+										Начало
+									</>,
 									<DatetimePicker
 										value={task.start_date}
 										setValue={(v) => setTask((t) => ({ ...t, start_date: v }))}
 									/>,
 								)}
 								{Item(
-									"Дедлайн",
+									<>
+										<HiOutlineCalendar />
+										Дедлайн
+									</>,
 									<DatetimePicker
 										value={task.end_date}
 										setValue={(v) => setTask((t) => ({ ...t, end_date: v }))}

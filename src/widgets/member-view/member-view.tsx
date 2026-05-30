@@ -29,9 +29,7 @@ export function MemberView({ projectUUID }: { projectUUID: UUID }) {
 						</Text>
 					</Box>
 					<CreateMemberDialog projectUUID={projectUUID}>
-						<Button size="sm" colorScheme="blue">
-							+ Добавить участника
-						</Button>
+						<Button size="sm">+ Добавить участника</Button>
 					</CreateMemberDialog>
 				</Flex>
 

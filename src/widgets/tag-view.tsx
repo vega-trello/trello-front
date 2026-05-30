@@ -206,7 +206,7 @@ export function TagView({ projectUUID }: { projectUUID: UUID }) {
 							Тэгов в проекте: {tags.length}
 						</Text>
 					</Box>
-					<Button size="sm" colorScheme="blue" onClick={handleCreate}>
+					<Button size="sm" onClick={handleCreate}>
 						+ Добавить тэг
 					</Button>
 				</Flex>

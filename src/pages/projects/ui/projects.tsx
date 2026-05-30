@@ -12,7 +12,7 @@ import {
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Project } from "../../../shared/api/openapi/components/schemas";
-import { AddProjectButton } from "./add-project-button";
+import { AddProjectDialog } from "./add-project-dialog";
 import {
 	useProjects,
 	useDeleteProject,
@@ -25,7 +25,6 @@ import {
 	toaster,
 	useTitle,
 } from "../../../shared";
-import "./projects.css";
 
 const deleteDialog = createAlertDialog({
 	title: "Вы уверены?",
@@ -122,6 +121,7 @@ export function Projects() {
 	const deleteProject = useDeleteProject();
 	const navigate = useNavigate();
 	useTitle("Проекты");
+
 	const onSelect = useCallback(
 		(project: Project) => {
 			navigate(`/project/${project.uuid}`);
@@ -140,11 +140,11 @@ export function Projects() {
 	if (isPending) return <Loader size="lg" />;
 
 	return (
-		<div id="projects">
+		<Box width='100%' height='100%'>
 			<deleteDialog.Viewport />
 			<editProjectDialog.Viewport />
 
-			<Box as="main" padding="4">
+			<Box as="main" padding="4" width='100%' height='100%'>
 				<ProjectsCards
 					projects={projects}
 					onSelect={onSelect}
@@ -162,8 +162,10 @@ export function Projects() {
 						})
 					}
 				/>
-				<AddProjectButton />
+				<AddProjectDialog>
+					<Button variant="solid" position='absolute' bottom='4' right='4'>Добавить</Button>
+				</AddProjectDialog>
 			</Box>
-		</div>
+		</Box>
 	);
 }
