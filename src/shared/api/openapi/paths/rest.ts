@@ -4,11 +4,11 @@ import type {
 	QueryParam,
 	PathParam,
 } from "../components/parameters/parameter";
-import type { Response } from "../components/responses/response";
+import type { Response as _Response } from "../components/responses/response";
 
 const base = `${window.location.protocol}//${window.location.hostname}:8080`;
 
-type Transform<T extends Record<number, Response<unknown>>> = {
+type Transform<T extends Record<number, _Response<unknown>>> = {
 	[K in keyof T]: T[K] & {
 		status: K;
 	};
@@ -24,9 +24,39 @@ function _fetch(input: URL | RequestInfo, init: RequestInit) {
 	return fetch(input, init);
 }
 
+async function parseBody(res: Response) {
+	try {
+		return await res.json();
+	} catch {
+		return undefined;
+	}
+}
+
+function buildURL<
+	Params extends Param<string>[],
+	P extends {
+		[K in Params[number] as K extends PathParam<infer T> ? T : never]: string;
+	},
+	Q extends {
+		[K in Params[number] as K extends QueryParam<infer T> ? T : never]: string;
+	},
+>(rawURL: string, path: P, query: Q) {
+	let url = rawURL;
+	for (const key in path) {
+		url = url.replace(
+			`{${String(key)}}`,
+			path[key as keyof typeof path] as string,
+		);
+	}
+	const result = new URL(url, base);
+	for (const key in query)
+		result.searchParams.set(key, query[key as keyof typeof query] as string);
+	return result;
+}
+
 export function GET<
 	Params extends Param<string>[],
-	R extends Record<number, Response<unknown>> = {},
+	R extends Record<number, _Response<unknown>> = {},
 >(
 	rawUrl: string,
 ): (
@@ -39,21 +69,13 @@ export function GET<
 	signal?: AbortSignal,
 ) => Promise<Transform<R>> {
 	return async (path, query, signal) => {
-		let url = rawUrl;
-		for (const key in path) {
-			const param = path[key as keyof typeof path] as string;
-			url = url.replace(`{${String(key)}}`, param);
-		}
-		const input = new URL(url, base);
-		for (const key in query) {
-			input.searchParams.set(key, query[key as keyof typeof query] as string);
-		}
+		const url = buildURL(rawUrl, path, query);
 
-		const res = await _fetch(input, {
+		const res = await _fetch(url, {
 			method: "GET",
 			signal,
 		});
-		const body = await res.json();
+		const body = parseBody(res);
 
 		return {
 			status: res.status,
@@ -65,7 +87,7 @@ export function GET<
 export function POST<
 	Params extends Param<string>[],
 	Body,
-	R extends Record<number, Response<unknown>> = {},
+	R extends Record<number, _Response<unknown>> = {},
 >(
 	rawUrl: string,
 ): (
@@ -79,22 +101,14 @@ export function POST<
 	signal?: AbortSignal,
 ) => Promise<Transform<R>> {
 	return async (path, query, body, signal) => {
-		let url = rawUrl;
-		for (const key in path) {
-			const param = path[key as keyof typeof path] as string;
-			url = url.replace(`{${String(key)}}`, param);
-		}
-		const input = new URL(url, base);
-		for (const key in query) {
-			input.searchParams.set(key, query[key as keyof typeof query] as string);
-		}
+		const url = buildURL(rawUrl, path, query);
 
-		const res = await _fetch(input, {
+		const res = await _fetch(url, {
 			method: "POST",
 			body: JSON.stringify(body),
 			signal,
 		});
-		const data = await res.json();
+		const data = parseBody(res);
 
 		return {
 			status: res.status,
@@ -106,7 +120,7 @@ export function POST<
 export function PATCH<
 	Params extends Param<string>[],
 	Body,
-	R extends Record<number, Response<unknown>> = {},
+	R extends Record<number, _Response<unknown>> = {},
 >(
 	rawUrl: string,
 ): (
@@ -120,22 +134,14 @@ export function PATCH<
 	signal?: AbortSignal,
 ) => Promise<Transform<R>> {
 	return async (path, query, body, signal) => {
-		let url = rawUrl;
-		for (const key in path) {
-			const param = path[key as keyof typeof path] as string;
-			url = url.replace(`{${String(key)}}`, param);
-		}
-		const input = new URL(url, base);
-		for (const key in query) {
-			input.searchParams.set(key, query[key as keyof typeof query] as string);
-		}
+		const url = buildURL(rawUrl, path, query);
 
-		const res = await _fetch(input, {
+		const res = await _fetch(url, {
 			method: "PATCH",
 			body: JSON.stringify(body),
 			signal,
 		});
-		const data = await res.json();
+		const data = parseBody(res);
 
 		return {
 			status: res.status,
@@ -146,7 +152,7 @@ export function PATCH<
 
 export function DELETE<
 	Params extends Param<string>[],
-	R extends Record<number, Response<unknown>> = {},
+	R extends Record<number, _Response<unknown>> = {},
 >(
 	rawUrl: string,
 ): (
@@ -159,21 +165,13 @@ export function DELETE<
 	signal?: AbortSignal,
 ) => Promise<Transform<R>> {
 	return async (path, query, signal) => {
-		let url = rawUrl;
-		for (const key in path) {
-			const param = path[key as keyof typeof path] as string;
-			url = url.replace(`{${String(key)}}`, param);
-		}
-		const input = new URL(url, base);
-		for (const key in query) {
-			input.searchParams.set(key, query[key as keyof typeof query] as string);
-		}
+		const url = buildURL(rawUrl, path, query);
 
-		const res = await _fetch(input, {
+		const res = await _fetch(url, {
 			method: "DELETE",
 			signal,
 		});
-		const body = await res.json();
+		const body = parseBody(res);
 
 		return {
 			status: res.status,

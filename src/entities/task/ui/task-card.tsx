@@ -37,7 +37,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 		isError,
 		error,
 	} = useTaskTags(projectUUID, task.id);
-	const { data: status } = useStatus(projectUUID, task.status_id ?? -1);
+	const { data: status } = useStatus(projectUUID, task.status_id);
 	const { data: assignees } = useAssignees(projectUUID, task.id);
 	const title =
 		task.title === null || task.title.trim().length === 0 ? "​" : task.title;

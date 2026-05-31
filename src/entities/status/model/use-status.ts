@@ -14,12 +14,13 @@ export const useStatuses = (projectUUID: UUID) =>
 		},
 	);
 
-export const useStatus = (projectUUID: UUID, statusID: integer) =>
+export const useStatus = (projectUUID: UUID, statusID: integer | null) =>
 	useApiQuery(
 		API.Project.Statuses.Get,
 		HTTP.OK,
-		{ projectUUID, statusID },
+		{ projectUUID, statusID: statusID ?? -1 },
 		{
-			queryKey: QueryKeys.status(projectUUID, statusID),
+			queryKey: QueryKeys.status(projectUUID, statusID ?? -1),
+			enabled: statusID !== null,
 		},
 	);
