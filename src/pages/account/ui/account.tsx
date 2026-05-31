@@ -30,10 +30,10 @@ function UpdateDialog({
 	const updateSelf = useUpdateSelf();
 
 	const handleUpdate = useCallback(() => {
-		const update: UpdateUser = {};
-		if (username.length !== 0) update.username = username;
-		if (password.length !== 0 && user.user_type === "manual")
-			update.password = password;
+		const update: UpdateUser = {
+			username: username.length !== 0 ? username : null,
+			password: user.user_type === "manual" ? password : null,
+		};
 
 		updateSelf.mutate(update, {
 			onSuccess: () =>

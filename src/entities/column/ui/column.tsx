@@ -18,7 +18,7 @@ import { HiArrowLeft, HiArrowRight, HiDotsHorizontal } from "react-icons/hi";
 import { TaskCard, useTasks } from "../../task";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import { ErrorAlert } from "../../../widgets";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { errorMessage, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
 import { useColumn, useDeleteColumn, useMoveColumn } from "../";
@@ -130,9 +130,14 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	const { data: column, isPending, isError, error } = useColumn(columnID);
 	const { data: allTasks } = useTasks(projectUUID);
 	const tasks = allTasks?.filter(
-		(task) =>
-			task.archived_at === undefined && task.column_id === (column?.id ?? -1),
+		(task) => task.archived_at === null && column?.id === task.id,
 	);
+	useEffect(() => {
+		console.log({
+			name: column?.name,
+			columnId: column?.id,
+		});
+	}, [tasks, column, allTasks]);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isPending) return <Spinner />;

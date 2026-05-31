@@ -1,4 +1,5 @@
 import type { integer } from "./integer";
+import type { Nullable } from "./nullable";
 
 export type Permission = {
 	id: integer;
@@ -12,5 +13,5 @@ export type Permission = {
 		| "manage_statuses"
 		| "manage_tags"
 		| "manage_assignees";
-	description?: string;
+	description: Nullable<string>;
 };

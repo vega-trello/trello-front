@@ -34,7 +34,7 @@ const restoreDialog = createAlertDialog({
 export function ArchiveView({ projectUUID }: { projectUUID: UUID }) {
 	const { data: allTasks, isPending, isError, error } = useTasks(projectUUID);
 	const archivedTasks = useMemo(
-		() => allTasks?.filter((t) => t.archived_at !== undefined) ?? [],
+		() => allTasks?.filter((t) => t.archived_at !== null) ?? [],
 		[allTasks],
 	);
 	const deleteTask = useDeleteTask();

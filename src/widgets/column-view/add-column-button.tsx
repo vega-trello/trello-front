@@ -14,7 +14,7 @@ export function AddColumnButton({ projectUUID }: { projectUUID: UUID }) {
 
 	const submit = () => {
 		createColumn.mutate(
-			{ projectUUID, name },
+			{ projectUUID, name, position: null },
 			{
 				onSuccess: () => setName(""),
 				onError: (err) => toaster.error(errorMessage(err)),

@@ -24,8 +24,10 @@ export function AddProjectDialog({ children }: PropsWithChildren) {
 	const createProject = useCreateProject();
 
 	const create = useCallback(async () => {
-		const data: CreateProject = { title };
-		if (desc !== "") data.description = desc;
+		const data: CreateProject = {
+			title,
+			description: desc !== "" ? desc : null,
+		};
 
 		createProject.mutate(data, {
 			onError(err) {
@@ -46,9 +48,7 @@ export function AddProjectDialog({ children }: PropsWithChildren) {
 			motionPreset="slide-in-bottom"
 			placement="center"
 		>
-			<Dialog.Trigger asChild>
-				{children}
-			</Dialog.Trigger>
+			<Dialog.Trigger asChild>{children}</Dialog.Trigger>
 			<Portal>
 				<Dialog.Backdrop />
 				<Dialog.Positioner>

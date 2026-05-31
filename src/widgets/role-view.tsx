@@ -30,6 +30,7 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 			},
 		);
 	}, [deleteRole, role]);
+
 	return (
 		<Box display="flex" alignItems="center" justifyContent="space-between">
 			<Flex flexDirection="column" gap={0} flex={1} cursor="pointer" as="label">
@@ -40,7 +41,7 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 					</Text>
 				)}
 			</Flex>
-			{role.project_uuid !== undefined && (
+			{role.project_uuid !== null && (
 				<Box>
 					<IconButton
 						variant="ghost"
@@ -78,6 +79,7 @@ export function RoleView({ projectUUID }: { projectUUID: UUID }) {
 		createRole.mutate(
 			{
 				name: "Новая роль",
+				description: null,
 				permission_ids: [],
 				projectUUID,
 			},

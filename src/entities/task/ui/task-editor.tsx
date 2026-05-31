@@ -93,7 +93,7 @@ export function TaskEditor({
 				setTask(_task);
 				setTags(_tags);
 				setAssigneesUUIDs(_assignees.map((a) => a.user_uuid));
-				setArchived(_task.archived_at !== undefined);
+				setArchived(_task.archived_at !== null);
 			}
 			setOpen(e.open);
 		},
@@ -106,11 +106,11 @@ export function TaskEditor({
 				projectUUID: projectUUID!,
 				taskID: task.id,
 				title: textOrNull(titleRef.current?.value),
-				status_id: task.status_id ?? null,
+				status_id: task.status_id,
 				description: textOrNull(descRef.current?.value),
 				column_id: task.column_id,
-				start_date: task.start_date ?? null,
-				end_date: task.end_date ?? null,
+				start_date: task.start_date,
+				end_date: task.end_date,
 				archived,
 			},
 			{
@@ -220,7 +220,9 @@ export function TaskEditor({
 									<></>,
 									<Input
 										variant="flushed"
-										defaultValue={_task.title}
+										defaultValue={
+											_task.title === null ? undefined : _task.title
+										}
 										size="xl"
 										ref={titleRef}
 									/>,
@@ -263,7 +265,7 @@ export function TaskEditor({
 										setValue={(v) =>
 											setTask((t) => ({
 												...t,
-												status_id: v === undefined ? undefined : parseInt(v),
+												status_id: v === undefined ? null : parseInt(v),
 											}))
 										}
 									/>,
@@ -298,8 +300,10 @@ export function TaskEditor({
 										Начало
 									</>,
 									<DatetimePicker
-										value={task.start_date}
-										setValue={(v) => setTask((t) => ({ ...t, start_date: v }))}
+										value={task.start_date ?? undefined}
+										setValue={(v) =>
+											setTask((t) => ({ ...t, start_date: v ?? null }))
+										}
 									/>,
 								)}
 								{Item(
@@ -308,15 +312,20 @@ export function TaskEditor({
 										Дедлайн
 									</>,
 									<DatetimePicker
-										value={task.end_date}
-										setValue={(v) => setTask((t) => ({ ...t, end_date: v }))}
+										value={task.end_date ?? undefined}
+										setValue={(v) =>
+											setTask((t) => ({ ...t, end_date: v ?? null }))
+										}
 									/>,
 								)}
 								{Item(
 									<>
 										<HiOutlineMenuAlt2 /> Описание
 									</>,
-									<Textarea defaultValue={_task.description} ref={descRef} />,
+									<Textarea
+										defaultValue={_task.description ?? undefined}
+										ref={descRef}
+									/>,
 								)}
 								{Item(
 									<></>,

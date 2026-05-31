@@ -6,6 +6,7 @@
   "homepage": "https://vega-trello.github.io/trello-front",
   "scripts": {
     "dev": "vite",
+    "dev-test": "vite --mode test",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",

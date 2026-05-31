@@ -15,7 +15,14 @@ export function AddTaskButton({
 	const createTask = useCreateTask();
 	const create = useCallback(() => {
 		createTask.mutate(
-			{ projectUUID, title: "", column_id: columnID },
+			{
+				projectUUID,
+				title: "",
+				column_id: columnID,
+				description: null,
+				end_date: null,
+				start_date: null,
+			},
 			{ onError: (err) => toaster.error(errorMessage(err)) },
 		);
 	}, [createTask, projectUUID, columnID]);

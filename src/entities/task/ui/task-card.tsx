@@ -40,18 +40,15 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 	const { data: status } = useStatus(projectUUID, task.status_id ?? -1);
 	const { data: assignees } = useAssignees(projectUUID, task.id);
 	const title =
-		task.title === undefined || task.title.trim().length === 0
-			? "​"
-			: task.title;
+		task.title === null || task.title.trim().length === 0 ? "​" : task.title;
 
 	const modifiers = {
 		subscribed: assignees?.some((a) => a.user_uuid === user?.uuid),
 		deadline:
-			task.end_date !== undefined
+			task.end_date !== null
 				? formatShortDate(new Date(task.end_date))
 				: undefined,
-		description:
-			task.description !== undefined && task.description.length !== 0,
+		description: task.description !== null && task.description.length !== 0,
 	};
 	const anyModifier = Object.values(modifiers).some((t) => t);
 	const hasAssignees = assignees && assignees.length > 0;
@@ -60,7 +57,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 	if (isPending) return <Spinner size="sm" />;
 
 	const deadlineColor =
-		task.end_date !== undefined
+		task.end_date !== null
 			? new Date(task.end_date).getTime() < new Date().getTime()
 				? "red"
 				: undefined
@@ -104,7 +101,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 					</Box>
 				)}
 				<Text fontSize="sm">{title}</Text>
-				{task.status_id !== undefined && status !== undefined && (
+				{task.status_id !== null && status !== undefined && (
 					<Text fontSize="xs" color="fg.muted">
 						{status.name}
 					</Text>

@@ -49,7 +49,7 @@ type DBSSOUser = {
 type DBProject = {
 	uuid: UUID;
 	title: string;
-	description?: string;
+	description: string | null;
 	created_at: Datetime;
 	updated_at: Datetime;
 };
@@ -66,7 +66,7 @@ type DBPermission = {
 		| "manage_statuses"
 		| "manage_tags"
 		| "manage_assignees";
-	description?: string;
+	description: string | null;
 };
 
 type DBrole_permission = {
@@ -76,9 +76,9 @@ type DBrole_permission = {
 
 type DBRole = {
 	id: integer;
-	project_uuid?: UUID;
+	project_uuid: UUID | null;
 	name: string;
-	description?: string;
+	description: string | null;
 };
 
 type DBMember = {
@@ -106,16 +106,16 @@ type DBStatus = {
 type DBTask = {
 	id: integer;
 	column_id: integer;
-	status_id?: integer;
+	status_id: integer | null;
 	creator_uuid: UUID;
-	title?: string;
-	description?: string;
-	deleted_at?: Datetime;
-	archived_at?: Datetime;
+	title: string | null;
+	description: string | null;
+	deleted_at: Datetime | null;
+	archived_at: Datetime | null;
 	created_at: Datetime;
 	updated_at: Datetime;
-	start_date?: Datetime;
-	end_date?: Datetime;
+	start_date: Datetime | null;
+	end_date: Datetime | null;
 };
 
 type DBAssignee = {
@@ -260,6 +260,7 @@ function getInitialDB(): DB {
 		role: [
 			{
 				id: 1,
+				project_uuid: null,
 				name: "Создатель",
 				description: "Создатель проекта, обладающий всеми разрешениями",
 			},
@@ -572,7 +573,7 @@ export const Adapter: APIAdapter = {
 			return await prom((resolve) =>
 				withDB((db) => {
 					const base = db.baseUser.find((u) => u.uuid === res.user.uuid)!;
-					if (req.username !== undefined) {
+					if (req.username !== null) {
 						if (db.baseUser.some((u) => u.username === req.username)) {
 							resolve({
 								status: HTTP.Conflict,
@@ -585,7 +586,7 @@ export const Adapter: APIAdapter = {
 						}
 						base.username = req.username;
 					}
-					if (base.user_type === "sso" && req.password !== undefined) {
+					if (base.user_type === "sso" && req.password !== null) {
 						resolve({
 							status: HTTP.BadRequest,
 							body: {
@@ -595,7 +596,7 @@ export const Adapter: APIAdapter = {
 						});
 						return { db: null };
 					}
-					if (req.password !== undefined && base.user_type === "sso") {
+					if (req.password !== null && base.user_type === "sso") {
 						const manual = db.manualUser.find(
 							(u) => u.user_uuid === base.uuid,
 						)!;
@@ -687,7 +688,7 @@ export const Adapter: APIAdapter = {
 					withDB((db) => {
 						const project = db.project.find((p) => p.uuid === projectUUID)!;
 						project.title = update.title;
-						project.description = update.description ?? undefined;
+						project.description = update.description;
 						project.updated_at = now();
 						resolve({ status: HTTP.OK, body: structuredClone(project) });
 						return { db };
@@ -720,7 +721,7 @@ export const Adapter: APIAdapter = {
 						.filter((c) => c.project_uuid === projectUUID)
 						.map((c) => c.id);
 					db.tasks = db.tasks.filter(
-						(t) => t.column_id === undefined || !colIds.includes(t.column_id),
+						(t) => t.column_id === null || !colIds.includes(t.column_id),
 					);
 					db.column = db.column.filter((c) => c.project_uuid !== projectUUID);
 					db.member = db.member.filter((m) => m.project_uuid !== projectUUID);
@@ -1027,7 +1028,7 @@ export const Adapter: APIAdapter = {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
-							if (update.role_id !== undefined) {
+							if (update.role_id !== null) {
 								const roleExists = db.role.some(
 									(r) =>
 										r.id === update.role_id &&
@@ -1180,7 +1181,7 @@ export const Adapter: APIAdapter = {
 						withDB((db) => {
 							resolve({
 								status: HTTP.OK,
-								body: db.tasks.filter((task) => task.deleted_at === undefined),
+								body: db.tasks.filter((task) => task.deleted_at === null),
 							});
 							return { db };
 						}),
@@ -1199,6 +1200,9 @@ export const Adapter: APIAdapter = {
 											creator_uuid: auth.user.uuid,
 											created_at: now(),
 											updated_at: now(),
+											status_id: null,
+											deleted_at: null,
+											archived_at: null,
 											...rest,
 										};
 										db.tasks.push(newTask);
@@ -1216,7 +1220,7 @@ export const Adapter: APIAdapter = {
 					return prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== undefined) {
+							if (task === undefined || task.deleted_at !== null) {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
@@ -1232,15 +1236,15 @@ export const Adapter: APIAdapter = {
 					return prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== undefined) {
+							if (task === undefined || task.deleted_at !== null) {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
-							task.title = update.title ?? undefined;
-							task.status_id = update.status_id ?? undefined;
-							task.description = update.description ?? undefined;
-							task.start_date = update.start_date ?? undefined;
-							task.end_date = update.end_date ?? undefined;
+							task.title = update.title;
+							task.status_id = update.status_id;
+							task.description = update.description;
+							task.start_date = update.start_date;
+							task.end_date = update.end_date;
 
 							const newCol = db.column.find(
 								(c) =>
@@ -1255,11 +1259,12 @@ export const Adapter: APIAdapter = {
 							}
 							task.column_id = update.column_id;
 
-							task.archived_at = update.archived
-								? task.archived_at === undefined
-									? now()
-									: task.archived_at
-								: undefined;
+							task.archived_at =
+								update.archived !== null
+									? task.archived_at === null
+										? now()
+										: task.archived_at
+									: null;
 							task.updated_at = now();
 							resolve({ status: HTTP.OK, body: task });
 							return { db };
@@ -1273,7 +1278,7 @@ export const Adapter: APIAdapter = {
 					return prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== undefined) {
+							if (task === undefined || task.deleted_at !== null) {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
@@ -1290,7 +1295,7 @@ export const Adapter: APIAdapter = {
 						db,
 						task: db.tasks.find((t) => t.id === taskID),
 					}));
-					if (task === undefined || task.deleted_at !== undefined)
+					if (task === undefined || task.deleted_at !== null)
 						return { status: HTTP.NotFound };
 					const res = await requireProjectAccess(projectUUID, "view_project");
 					if (!res.ok) return { status: res.status, body: res.error };
@@ -1309,14 +1314,14 @@ export const Adapter: APIAdapter = {
 						db,
 						task: db.tasks.find((t) => t.id === taskID),
 					}));
-					if (task === undefined || task.deleted_at !== undefined)
+					if (task === undefined || task.deleted_at !== null)
 						return { status: HTTP.NotFound };
 					const res = await requireProjectAccess(projectUUID, "manage_tasks");
 					if (!res.ok) return { status: res.status, body: res.error };
 					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== undefined) {
+							if (task === undefined || task.deleted_at !== null) {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
@@ -1350,14 +1355,14 @@ export const Adapter: APIAdapter = {
 						db,
 						task: db.tasks.find((t) => t.id === taskID),
 					}));
-					if (task === undefined || task.deleted_at !== undefined)
+					if (task === undefined || task.deleted_at !== null)
 						return { status: HTTP.NotFound };
 					const res = await requireProjectAccess(projectUUID, "manage_tasks");
 					if (!res.ok) return { status: res.status, body: res.error };
 					return await prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== undefined) {
+							if (task === undefined || task.deleted_at !== null) {
 								resolve({ status: HTTP.NotFound });
 								return { db };
 							}
@@ -1385,7 +1390,7 @@ export const Adapter: APIAdapter = {
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
-						if (task === undefined || task.deleted_at !== undefined) {
+						if (task === undefined || task.deleted_at !== null) {
 							resolve({ status: HTTP.NotFound });
 							return { db };
 						}
@@ -1404,7 +1409,7 @@ export const Adapter: APIAdapter = {
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
-						if (task === undefined || task.deleted_at !== undefined) {
+						if (task === undefined || task.deleted_at !== null) {
 							resolve({ status: HTTP.NotFound });
 							return { db };
 						}
@@ -1446,7 +1451,7 @@ export const Adapter: APIAdapter = {
 				return prom((resolve) =>
 					withDB((db) => {
 						const task = db.tasks.find((t) => t.id === taskID);
-						if (task === undefined || task.deleted_at !== undefined) {
+						if (task === undefined || task.deleted_at !== null) {
 							resolve({ status: HTTP.NotFound });
 							return { db };
 						}
@@ -1546,7 +1551,7 @@ export const Adapter: APIAdapter = {
 					withDB((db) => {
 						const roles = db.role.filter(
 							(r) =>
-								r.project_uuid === projectUUID || r.project_uuid === undefined,
+								r.project_uuid === projectUUID || r.project_uuid === null,
 						);
 						resolve({ status: HTTP.OK, body: roles });
 						return { db };
@@ -1581,7 +1586,7 @@ export const Adapter: APIAdapter = {
 							(r) =>
 								r.id === roleID &&
 								(r.project_uuid === projectUUID ||
-									r.project_uuid === undefined),
+									r.project_uuid === null),
 						);
 						if (role === undefined) {
 							resolve({ status: HTTP.NotFound });
@@ -1608,7 +1613,7 @@ export const Adapter: APIAdapter = {
 							return { db };
 						}
 						role.name = update.name;
-						role.description = update.description ?? undefined;
+						role.description = update.description;
 						const curPermIds = db.role_permissions
 							.filter((rp) => rp.role_id === roleID)
 							.map((rp) => rp.permission_id);
@@ -1645,7 +1650,7 @@ export const Adapter: APIAdapter = {
 							(r) =>
 								r.id === roleID &&
 								(r.project_uuid === projectUUID ||
-									r.project_uuid === undefined),
+									r.project_uuid === null),
 						);
 						if (idx === -1) {
 							resolve({ status: HTTP.NotFound });
