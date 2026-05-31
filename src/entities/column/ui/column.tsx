@@ -132,12 +132,6 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	const tasks = allTasks?.filter(
 		(task) => task.archived_at === null && column?.id === task.id,
 	);
-	useEffect(() => {
-		console.log({
-			name: column?.name,
-			columnId: column?.id,
-		});
-	}, [tasks, column, allTasks]);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isPending) return <Spinner />;
