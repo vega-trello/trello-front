@@ -18,7 +18,7 @@ import { HiArrowLeft, HiArrowRight, HiDotsHorizontal } from "react-icons/hi";
 import { TaskCard, useTasks } from "../../task";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import { ErrorAlert } from "../../../widgets";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { errorMessage, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
 import { useColumn, useDeleteColumn, useMoveColumn } from "../";
@@ -129,8 +129,12 @@ function ColumnMenu({
 export function Column({ projectUUID, columnID }: ColumnProps) {
 	const { data: column, isPending, isError, error } = useColumn(columnID);
 	const { data: allTasks } = useTasks(projectUUID);
-	const tasks = allTasks?.filter(
-		(task) => task.archived_at === null && column?.id === task.id,
+	const tasks = useMemo(
+		() =>
+			allTasks?.filter(
+				(task) => task.archived_at === null && task.column_id === column?.id,
+			),
+		[allTasks, column],
 	);
 
 	if (isError) return <ErrorAlert error={error} />;
