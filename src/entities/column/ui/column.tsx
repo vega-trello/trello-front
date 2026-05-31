@@ -18,7 +18,7 @@ import { HiArrowLeft, HiArrowRight, HiDotsHorizontal } from "react-icons/hi";
 import { TaskCard, useTasks } from "../../task";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import { ErrorAlert } from "../../../widgets";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { errorMessage, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
 import { useColumn, useDeleteColumn, useMoveColumn } from "../";
