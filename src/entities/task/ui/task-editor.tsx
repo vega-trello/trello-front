@@ -122,7 +122,7 @@ export function TaskEditor({
 			TextStyle,
 			Color,
 		],
-		editable: true,
+		editable: false,
 		immediatelyRender: false,
 	});
 
@@ -327,27 +327,6 @@ export function TaskEditor({
 								</>
 							)}
 						</Box>
-						{/* <ColorPicker.Root
-							value={task.color ? parseColor(task.color) : undefined}
-							onValueChange={(e) =>
-								setTask((t) => ({
-									...t,
-									color: e.value.toString("hex") as TColor,
-								}))
-							}
-							format="hsla"
-						>
-							<ColorPicker.HiddenInput />
-							<ColorPicker.Control>
-								<ColorPicker.Trigger />
-							</ColorPicker.Control>
-							<ColorPicker.Positioner>
-								<ColorPicker.Content>
-									<ColorPicker.Area />
-									<ColorPicker.Sliders />
-								</ColorPicker.Content>
-							</ColorPicker.Positioner>
-						</ColorPicker.Root> */}
 						<Dialog.Body>
 							<DataList.Root>
 								{Item(
