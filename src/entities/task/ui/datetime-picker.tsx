@@ -13,6 +13,7 @@ export function DatetimePicker({
 	return (
 		<DatePicker.Root
 			locale="ru-RU"
+			timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
 			value={parsed}
 			onValueChange={(e) => {
 				if (e.value.length === 0) {
