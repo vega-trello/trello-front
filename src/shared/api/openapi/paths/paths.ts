@@ -402,7 +402,7 @@ export const TaskUpdate = PATCH<
 	}
 >("/projects/{projectUUID}/task");
 
-export const TaskMove = PATCH<
+export const TaskMove = POST<
 	[ProjectUUID, TaskID],
 	{ column_id: integer },
 	{
