@@ -24,15 +24,16 @@ import {
 	useUpdateTag,
 } from "../entities/tag";
 import { ErrorAlert } from "./error-alert";
-import { createAlertDialog, errorMessage, toaster, useTitle } from "../shared";
+import {
+	createAlertDialog,
+	errorMessage,
+	toaster,
+	useTitle,
+	randomHexColor,
+} from "../shared";
 import { Loader } from "./loader";
 import { useCallback, useRef, useState, type PropsWithChildren } from "react";
 import { HiOutlinePencilAlt, HiOutlineTrash } from "react-icons/hi";
-
-const randomHexColor: () => Color = () =>
-	`#${Math.floor(Math.random() * 0xffffff)
-		.toString(16)
-		.padStart(6, "0")}`;
 
 const deleteDialog = createAlertDialog({
 	title: "Вы уверены?",

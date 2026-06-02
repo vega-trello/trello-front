@@ -8,6 +8,7 @@ import {
 	MenuTrigger,
 	Portal,
 	Spinner,
+	Text,
 	VStack,
 } from "@chakra-ui/react";
 import type {
@@ -18,12 +19,13 @@ import { HiArrowLeft, HiArrowRight, HiDotsHorizontal } from "react-icons/hi";
 import { TaskCard, useTasks } from "../../task";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import { ErrorAlert } from "../../../widgets";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { errorMessage, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
 import { useColumn, useDeleteColumn, useMoveColumn } from "../";
 import { renameDialog } from "./rename-dialog";
 import { deleteDialog } from "./delete-dialog";
+import { useDroppable } from "@dnd-kit/react";
 
 export type ColumnProps = {
 	projectUUID: UUID;
@@ -127,14 +129,17 @@ function ColumnMenu({
 }
 
 export function Column({ projectUUID, columnID }: ColumnProps) {
+	const { ref, isDropTarget } = useDroppable({
+		id: `column-${columnID}`,
+		accept: "card",
+		data: {
+			columnID,
+		},
+	});
 	const { data: column, isPending, isError, error } = useColumn(columnID);
 	const { data: allTasks } = useTasks(projectUUID);
-	const tasks = useMemo(
-		() =>
-			allTasks?.filter(
-				(task) => task.archived_at === null && task.column_id === column?.id,
-			),
-		[allTasks, column],
+	const tasks = allTasks?.filter(
+		(task) => task.archived_at === null && task.column_id === column?.id,
 	);
 
 	if (isError) return <ErrorAlert error={error} />;
@@ -142,6 +147,7 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 
 	return (
 		<Box
+			ref={ref}
 			bg="bg.subtle"
 			borderRadius="lg"
 			p="2"
@@ -153,7 +159,23 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 			flexShrink={0}
 			id={`column-${column.id}`}
 			gap="4"
+			position="relative"
 		>
+			<Box
+				pointerEvents="none"
+				userSelect="none"
+				position="absolute"
+				inset="0"
+				bg="rgba(128 128 128 / .9)"
+				opacity="0"
+				style={isDropTarget ? { opacity: "1" } : {}}
+				transition="opacity .1s ease"
+				display="flex"
+				justifyContent="center"
+				alignItems="center"
+			>
+				<Text>Переместить сюда</Text>
+			</Box>
 			<Heading
 				size="sm"
 				px={1}

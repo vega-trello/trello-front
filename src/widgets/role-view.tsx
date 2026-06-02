@@ -33,7 +33,7 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 
 	return (
 		<Box display="flex" alignItems="center" justifyContent="space-between">
-			<Flex flexDirection="column" gap={0} flex={1} cursor="pointer" as="label">
+			<Flex flexDirection="column" gap={0} flex={1} as="label">
 				<Text>{role.name}</Text>
 				{role.description && (
 					<Text fontSize="xs" color="gray.500">
@@ -72,6 +72,7 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 
 export function RoleView({ projectUUID }: { projectUUID: UUID }) {
 	const { data: roles, isPending, isError, error } = useRoles(projectUUID);
+	console.log({ roles });
 	const createRole = useCreateRole();
 	useTitle("Роли");
 

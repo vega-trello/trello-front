@@ -4,8 +4,11 @@ import type { UUID } from "../../shared/api/openapi/components/schemas";
 import { ErrorAlert, Loader } from "../";
 import { AddColumnButton } from "./add-column-button";
 import { deleteDialog, renameDialog } from "../../entities/column";
-import { type PropsWithChildren } from "react";
-import { useTitle } from "../../shared";
+import { useCallback, type PropsWithChildren } from "react";
+import { errorMessage, toaster, useTitle } from "../../shared";
+import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
+import { useMoveTask } from "../../entities/task";
+import type { integer } from "../../shared/api/openapi/components/schemas/integer";
 
 function ColumnWrapper({ children }: PropsWithChildren) {
 	return (
@@ -20,8 +23,30 @@ function ColumnWrapper({ children }: PropsWithChildren) {
 
 export function ColumnView({ projectUUID }: { projectUUID: UUID }) {
 	const { data: columns, isError, error, isPending } = useColumns(projectUUID);
-
+	const moveTask = useMoveTask();
 	useTitle("Доска");
+
+	const handleDrop = useCallback(
+		(evt: DragEndEvent) => {
+			const { source, target } = evt.operation;
+			if (!source || !target) return;
+
+			const { taskID } = source.data as { taskID: integer };
+			const { columnID } = target.data as { columnID: integer };
+
+			moveTask.mutate(
+				{
+					projectUUID,
+					taskID,
+					column_id: columnID,
+				},
+				{
+					onError: (err) => toaster.error(errorMessage(err)),
+				},
+			);
+		},
+		[moveTask, projectUUID],
+	);
 
 	if (isError) return <ErrorAlert error={error} />;
 	if (isPending) return <Loader size="xl" />;
@@ -36,13 +61,15 @@ export function ColumnView({ projectUUID }: { projectUUID: UUID }) {
 		>
 			<renameDialog.Viewport />
 			<deleteDialog.Viewport />
-			<For each={columns}>
-				{(column) => (
-					<ColumnWrapper key={column.id}>
-						<Column projectUUID={projectUUID} columnID={column.id} />
-					</ColumnWrapper>
-				)}
-			</For>
+			<DragDropProvider onDragEnd={handleDrop}>
+				<For each={columns}>
+					{(column) => (
+						<ColumnWrapper key={column.id}>
+							<Column projectUUID={projectUUID} columnID={column.id} />
+						</ColumnWrapper>
+					)}
+				</For>
+			</DragDropProvider>
 			<ColumnWrapper>
 				<AddColumnButton projectUUID={projectUUID} />
 			</ColumnWrapper>

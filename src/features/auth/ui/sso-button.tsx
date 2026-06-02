@@ -53,7 +53,7 @@ export function SSOButton() {
 		setTimeout(() => setPolling(false));
 		popupRef.current?.close();
 		handleExchange(token!);
-	}, [token, isSuccess]);
+	}, [token, isSuccess, handleExchange]);
 
 	const handleAuth = useCallback(async () => {
 		popupRef.current = window.open(
@@ -71,7 +71,7 @@ export function SSOButton() {
 			colorPalette="blue"
 			loading={isLoading}
 		>
-			Вход через SSO
+			Вход через Vega SSO
 		</Button>
 	);
 }

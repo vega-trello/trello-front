@@ -93,6 +93,7 @@ type DBColumn = {
 	project_uuid: UUID;
 	position: integer;
 	name: string;
+	color: Color | null;
 	created_at: Datetime;
 };
 
@@ -110,12 +111,14 @@ type DBTask = {
 	creator_uuid: UUID;
 	title: string | null;
 	description: string | null;
-	deleted_at: Datetime | null;
-	archived_at: Datetime | null;
+	color: Color | null;
 	created_at: Datetime;
 	updated_at: Datetime;
 	start_date: Datetime | null;
 	end_date: Datetime | null;
+	done: boolean;
+	archived_at: Datetime | null;
+	deleted_at: Datetime | null;
 };
 
 type DBAssignee = {
@@ -410,6 +413,45 @@ function randomUsername(): string {
 	const noun = nouns[Math.floor(Math.random() * nouns.length)];
 	const num = Math.floor(Math.random() * 1000);
 	return `${adj}_${noun}_${num}`;
+}
+
+function ensureOwnership(
+	projectUUID: UUID,
+	taskID: integer,
+):
+	| {
+			ok: false;
+			status: typeof HTTP.NotFound;
+			error: Error;
+	  }
+	| { ok: true; col: DBColumn; task: DBTask } {
+	const { task } = withDB((db) => ({
+		db,
+		task: db.tasks.find((t) => t.id === taskID),
+	}));
+	if (task === undefined)
+		return {
+			ok: false,
+			status: HTTP.NotFound,
+			error: ERRORS.NotFound("Задача не найдена"),
+		};
+	const { col } = withDB((db) => ({
+		db,
+		col: db.column.find((c) => c.id === task.column_id),
+	}));
+	if (col === undefined)
+		return {
+			ok: false,
+			status: HTTP.NotFound,
+			error: ERRORS.NotFound("Колонка не найдена"),
+		};
+	if (col.project_uuid !== projectUUID)
+		return {
+			ok: false,
+			status: HTTP.NotFound,
+			error: ERRORS.NotFound("Задача не принадлежит этому проекту"),
+		};
+	return { ok: true, col, task };
 }
 
 // ---------- API Adapter ----------
@@ -766,6 +808,7 @@ export const Adapter: APIAdapter = {
 								id: nextId(db.column),
 								project_uuid: projectUUID,
 								position: cols.length,
+								color: null,
 								name: create.name,
 								created_at: now(),
 							};
@@ -814,6 +857,7 @@ export const Adapter: APIAdapter = {
 							withDB((db) => {
 								const c = db.column.find((c) => c.id === columnID)!;
 								c.name = update.name;
+								c.color = update.color;
 								resolve({ status: HTTP.OK, body: structuredClone(c) });
 								return { db };
 							});
@@ -1203,6 +1247,8 @@ export const Adapter: APIAdapter = {
 											status_id: null,
 											deleted_at: null,
 											archived_at: null,
+											color: null,
+											done: false,
 											...rest,
 										};
 										db.tasks.push(newTask);
@@ -1217,22 +1263,20 @@ export const Adapter: APIAdapter = {
 			Get: ({ projectUUID, taskID }) =>
 				requireProjectAccess(projectUUID, "view_project").then((res) => {
 					if (!res.ok) return { status: res.status, body: res.error };
-					return prom((resolve) =>
-						withDB((db) => {
-							const task = db.tasks.find((t) => t.id === taskID);
-							if (task === undefined || task.deleted_at !== null) {
-								resolve({ status: HTTP.NotFound });
-								return { db };
-							}
-							resolve({ status: HTTP.OK, body: task });
-							return { db };
-						}),
-					);
+					const own = ensureOwnership(projectUUID, taskID);
+					if (!own.ok) return { status: own.status, body: own.error };
+					return {
+						status: HTTP.OK,
+						body: own.task,
+					};
 				}),
 
 			Update: ({ projectUUID, taskID, ...update }) =>
 				requireProjectAccess(projectUUID, "manage_tasks").then(async (res) => {
 					if (!res.ok) return { status: res.status, body: res.error };
+					const own = ensureOwnership(projectUUID, taskID);
+					if (!own.ok) return { status: own.status, body: own.error };
+
 					return prom((resolve) =>
 						withDB((db) => {
 							const task = db.tasks.find((t) => t.id === taskID);
@@ -1245,6 +1289,8 @@ export const Adapter: APIAdapter = {
 							task.description = update.description;
 							task.start_date = update.start_date;
 							task.end_date = update.end_date;
+							task.color = update.color;
+							task.done = update.done;
 
 							const newCol = db.column.find(
 								(c) =>
@@ -1259,17 +1305,40 @@ export const Adapter: APIAdapter = {
 							}
 							task.column_id = update.column_id;
 
-							task.archived_at =
-								update.archived !== null
-									? task.archived_at === null
-										? now()
-										: task.archived_at
-									: null;
+							task.archived_at = update.archived
+								? task.archived_at === null
+									? now()
+									: task.archived_at
+								: null;
 							task.updated_at = now();
 							resolve({ status: HTTP.OK, body: task });
 							return { db };
 						}),
 					);
+				}),
+
+			Move: ({ projectUUID, taskID, column_id }) =>
+				requireProjectAccess(projectUUID, "manage_tasks").then(async (res) => {
+					if (!res.ok) return { status: res.status, body: res.error };
+					const own = ensureOwnership(projectUUID, taskID);
+					if (!own.ok) return { status: own.status, body: own.error };
+					const { col: colToMove } = withDB((db) => ({
+						db,
+						col: db.column.find((c) => c.id === column_id),
+					}));
+					if (colToMove === undefined)
+						return {
+							status: HTTP.BadRequest,
+							body: ERRORS.BadRequest("Колонка не найдена"),
+						};
+
+					const { task: newTask } = withDB((db) => {
+						const task = db.tasks.find((t) => t.id === own.task.id)!;
+						task.column_id = column_id;
+						return { db, task: task };
+					});
+
+					return { status: HTTP.OK, body: newTask };
 				}),
 
 			Delete: ({ projectUUID, taskID }) =>
@@ -1550,8 +1619,7 @@ export const Adapter: APIAdapter = {
 				return prom((resolve) =>
 					withDB((db) => {
 						const roles = db.role.filter(
-							(r) =>
-								r.project_uuid === projectUUID || r.project_uuid === null,
+							(r) => r.project_uuid === projectUUID || r.project_uuid === null,
 						);
 						resolve({ status: HTTP.OK, body: roles });
 						return { db };
@@ -1585,8 +1653,7 @@ export const Adapter: APIAdapter = {
 						const role = db.role.find(
 							(r) =>
 								r.id === roleID &&
-								(r.project_uuid === projectUUID ||
-									r.project_uuid === null),
+								(r.project_uuid === projectUUID || r.project_uuid === null),
 						);
 						if (role === undefined) {
 							resolve({ status: HTTP.NotFound });
@@ -1649,8 +1716,7 @@ export const Adapter: APIAdapter = {
 						const idx = db.role.findIndex(
 							(r) =>
 								r.id === roleID &&
-								(r.project_uuid === projectUUID ||
-									r.project_uuid === null),
+								(r.project_uuid === projectUUID || r.project_uuid === null),
 						);
 						if (idx === -1) {
 							resolve({ status: HTTP.NotFound });

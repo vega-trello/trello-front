@@ -2,20 +2,22 @@ import {
 	Box,
 	Button,
 	Checkbox,
+	ColorPicker,
 	DataList,
 	Dialog,
 	For,
 	IconButton,
 	Input,
+	parseColor,
 	Portal,
 	Text,
-	Textarea,
 } from "@chakra-ui/react";
 import type {
 	Tag,
 	Assignee,
 	Task,
 	UUID,
+	Color as TColor,
 } from "../../../shared/api/openapi/components/schemas";
 import { useCallback, useRef, useState, type PropsWithChildren } from "react";
 import {
@@ -26,7 +28,7 @@ import {
 } from "react-icons/hi";
 import { HiOutlineViewColumns } from "react-icons/hi2";
 import { useAttachTag, useDetachTag, useUpdateTask } from "../";
-import { toaster, errorMessage } from "../../../shared";
+import { toaster, errorMessage, randomHexColor } from "../../../shared";
 import { useUser } from "../../user";
 import { ClickableTag } from "../../tag";
 import { StatusSelect } from "./status-select";
@@ -36,6 +38,26 @@ import { AssigneesView } from "./assignees-view";
 import { MdAdd } from "react-icons/md";
 import { useAddAssignee, useRemoveAssignee } from "../../assignee";
 import { ColumnSelect } from "./column-select";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import { useEditor } from "@tiptap/react";
+
+import TextAlign from "@tiptap/extension-text-align";
+import Link from "@tiptap/extension-link";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import { Table } from "@tiptap/extension-table";
+import TableRow from "@tiptap/extension-table-row";
+import TableCell from "@tiptap/extension-table-cell";
+import TableHeader from "@tiptap/extension-table-header";
+import Placeholder from "@tiptap/extension-placeholder";
+import CharacterCount from "@tiptap/extension-character-count";
+import Typography from "@tiptap/extension-typography";
+import Color from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { DescriptionEditor } from "./description-editor";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 
 function Item(label: React.ReactNode, value: React.ReactNode) {
 	return (
@@ -71,7 +93,6 @@ export function TaskEditor({
 		_assignees.map((a) => a.user_uuid),
 	);
 	const titleRef = useRef<HTMLInputElement | null>(null);
-	const descRef = useRef<HTMLTextAreaElement | null>(null);
 	const { data: user } = useUser(task.creator_uuid);
 	const [archived, setArchived] = useState(task.archived_at !== undefined);
 	const updateTask = useUpdateTask();
@@ -79,6 +100,31 @@ export function TaskEditor({
 	const detachTag = useDetachTag();
 	const addAssignee = useAddAssignee();
 	const removeAssignee = useRemoveAssignee();
+	const editor = useEditor({
+		extensions: [
+			StarterKit.configure({
+				heading: { levels: [1, 2, 3, 4, 5, 6] },
+			}),
+			Image.configure({ inline: true, allowBase64: true }),
+			Subscript,
+			Superscript,
+			TextAlign.configure({ types: ["heading", "paragraph"] }),
+			Link.configure({ openOnClick: false, autolink: true }),
+			TaskList,
+			TaskItem.configure({ nested: true }),
+			Table.configure({ resizable: true }),
+			TableRow,
+			TableCell,
+			TableHeader,
+			Placeholder.configure({ placeholder: "Описание задачи…" }),
+			CharacterCount,
+			Typography,
+			TextStyle,
+			Color,
+		],
+		editable: true,
+		immediatelyRender: false,
+	});
 
 	const pending =
 		updateTask.isPending ||
@@ -94,23 +140,34 @@ export function TaskEditor({
 				setTags(_tags);
 				setAssigneesUUIDs(_assignees.map((a) => a.user_uuid));
 				setArchived(_task.archived_at !== null);
+				editor?.commands.setContent(_task.description ?? "", {
+					emitUpdate: false,
+				});
 			}
 			setOpen(e.open);
 		},
-		[_task, _tags, _assignees],
+		[_task, _tags, _assignees, editor],
 	);
 
 	const update = useCallback(async () => {
+		const description = editor
+			? editor.isEmpty
+				? null
+				: editor.getHTML()
+			: null;
+
 		await updateTask.mutateAsync(
 			{
 				projectUUID: projectUUID!,
 				taskID: task.id,
 				title: textOrNull(titleRef.current?.value),
 				status_id: task.status_id,
-				description: textOrNull(descRef.current?.value),
+				description,
 				column_id: task.column_id,
 				start_date: task.start_date,
 				end_date: task.end_date,
+				color: task.color,
+				done: task.done,
 				archived,
 			},
 			{
@@ -198,6 +255,7 @@ export function TaskEditor({
 		assigneesUUIDs,
 		addAssignee,
 		removeAssignee,
+		editor,
 	]);
 
 	return (
@@ -214,6 +272,82 @@ export function TaskEditor({
 				<Dialog.Backdrop />
 				<Dialog.Positioner>
 					<Dialog.Content>
+						<Box
+							height="128px"
+							bg={task.color ?? undefined}
+							display="flex"
+							justifyContent='space-between'
+							alignItems="flex-end"
+							px="6"
+							py="2"
+							borderColor="border.emphasized"
+							borderWidth="thin"
+							borderTop="none"
+							borderInline="none"
+						>
+							{task.color === null ? (
+								<Button
+									variant="surface"
+									onClick={() =>
+										setTask((t) => ({ ...t, color: randomHexColor() }))
+									}
+								>
+									Добавить цвет
+								</Button>
+							) : (
+								<>
+									<ColorPicker.Root
+										value={parseColor(task.color)}
+										onValueChange={(e) =>
+											setTask((t) => ({
+												...t,
+												color: e.value.toString("hex") as TColor,
+											}))
+										}
+										format="hsla"
+									>
+										<ColorPicker.HiddenInput />
+										<ColorPicker.Control>
+											<ColorPicker.Trigger />
+											<ColorPicker.Input bg="bg.muted" />
+										</ColorPicker.Control>
+										<ColorPicker.Positioner>
+											<ColorPicker.Content>
+												<ColorPicker.Area />
+												<ColorPicker.Sliders />
+											</ColorPicker.Content>
+										</ColorPicker.Positioner>
+									</ColorPicker.Root>
+									<Button
+										variant="surface"
+										onClick={() => setTask((t) => ({ ...t, color: null }))}
+									>
+										Удалить цвет
+									</Button>
+								</>
+							)}
+						</Box>
+						{/* <ColorPicker.Root
+							value={task.color ? parseColor(task.color) : undefined}
+							onValueChange={(e) =>
+								setTask((t) => ({
+									...t,
+									color: e.value.toString("hex") as TColor,
+								}))
+							}
+							format="hsla"
+						>
+							<ColorPicker.HiddenInput />
+							<ColorPicker.Control>
+								<ColorPicker.Trigger />
+							</ColorPicker.Control>
+							<ColorPicker.Positioner>
+								<ColorPicker.Content>
+									<ColorPicker.Area />
+									<ColorPicker.Sliders />
+								</ColorPicker.Content>
+							</ColorPicker.Positioner>
+						</ColorPicker.Root> */}
 						<Dialog.Body>
 							<DataList.Root>
 								{Item(
@@ -322,9 +456,9 @@ export function TaskEditor({
 									<>
 										<HiOutlineMenuAlt2 /> Описание
 									</>,
-									<Textarea
+									<DescriptionEditor
+										editor={editor}
 										defaultValue={_task.description ?? undefined}
-										ref={descRef}
 									/>,
 								)}
 								{Item(

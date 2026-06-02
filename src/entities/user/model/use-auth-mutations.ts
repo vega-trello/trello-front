@@ -43,5 +43,8 @@ export const useExchange = () => {
 			tokenStorage.set(token);
 			queryClient.invalidateQueries({ queryKey: QueryKeys.self });
 		},
+		onError: (err) => {
+			console.log({ exchangeErr: err });
+		},
 	});
 };

@@ -23,6 +23,17 @@ export const useUpdateTask = () => {
 	});
 };
 
+export const useMoveTask = () => {
+	const queryClient = useQueryClient();
+
+	return useApiMutation(API.Project.Tasks.Move, HTTP.OK, {
+		onSuccess: (task, { projectUUID, taskID }) => {
+			queryClient.setQueryData(QueryKeys.task(taskID), task);
+			queryClient.invalidateQueries({ queryKey: QueryKeys.tasks(projectUUID) });
+		},
+	});
+};
+
 export const useDeleteTask = () => {
 	const queryClient = useQueryClient();
 

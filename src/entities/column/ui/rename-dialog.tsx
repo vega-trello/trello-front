@@ -1,4 +1,12 @@
-import { Button, createOverlay, Dialog, Field, Input, Portal, Stack } from "@chakra-ui/react";
+import {
+	Button,
+	createOverlay,
+	Dialog,
+	Field,
+	Input,
+	Portal,
+	Stack,
+} from "@chakra-ui/react";
 import type { Column } from "../../../shared/api/openapi/components/schemas";
 import { useCallback, useRef, useState } from "react";
 import { useUpdateColumn } from "../model/use-column-mutation";
@@ -19,6 +27,7 @@ export const renameDialog = createOverlay<{ column: Column }>(
 				{
 					columnID: column.id,
 					name,
+					color: column.color,
 				},
 				{ onSuccess: handleClose },
 			);

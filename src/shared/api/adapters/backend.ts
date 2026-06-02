@@ -50,6 +50,7 @@ import {
 	StatusesUpdate,
 	StatusesDelete,
 	PermissionsGetAll,
+	TaskMove,
 } from "../openapi/paths/paths";
 
 const s = (n: number) => n.toString();
@@ -130,6 +131,8 @@ export const Adapter: APIAdapter = {
 				TaskGet({ projectUUID }, { taskID: s(taskID) }, signal),
 			Update: ({ projectUUID, taskID, ...rest }, signal) =>
 				TaskUpdate({ projectUUID }, { taskID: s(taskID) }, rest, signal),
+			Move: ({ projectUUID, taskID, ...rest }, signal) =>
+				TaskMove({ projectUUID }, { taskID: s(taskID) }, rest, signal),
 			Delete: ({ projectUUID, taskID }, signal) =>
 				TaskDelete({ projectUUID }, { taskID: s(taskID) }, signal),
 

@@ -21,6 +21,7 @@ export function DatetimePicker({
 					setValue(e.value[0].toDate("UTC").toISOString());
 				}
 			}}
+			placeholder="дд.мм.гггг"
 		>
 			<DatePicker.Control>
 				<DatePicker.Input />

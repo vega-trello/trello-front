@@ -387,6 +387,17 @@ export type APIAdapter = {
 				[HTTP.NotFound]: EmptyResponse;
 			}>;
 
+			Move: (
+				req: { projectUUID: UUID; taskID: integer; column_id: integer },
+				signal?: AbortSignal,
+			) => Responses<{
+				[HTTP.OK]: Response<Task>;
+				[HTTP.BadRequest]: BadRequest;
+				[HTTP.Unauthorized]: Unauthorized;
+				[HTTP.Forbidden]: Forbidden;
+				[HTTP.NotFound]: EmptyResponse;
+			}>;
+
 			Delete: (
 				req: { projectUUID: UUID; taskID: integer },
 				signal?: AbortSignal,

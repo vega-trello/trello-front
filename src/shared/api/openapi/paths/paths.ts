@@ -47,6 +47,7 @@ import type {
 	UpdateStatus,
 } from "../components/schemas";
 import type { CreateColumn } from "../components/schemas/CreateColumn";
+import type { integer } from "../components/schemas/integer";
 import { DELETE, GET, PATCH, POST } from "./rest";
 
 /* ---------------------------------- Auth ---------------------------------- */
@@ -400,6 +401,18 @@ export const TaskUpdate = PATCH<
 		[HTTP.NotFound]: EmptyResponse;
 	}
 >("/projects/{projectUUID}/task");
+
+export const TaskMove = PATCH<
+	[ProjectUUID, TaskID],
+	{ column_id: integer },
+	{
+		[HTTP.OK]: Response<Task>;
+		[HTTP.BadRequest]: BadRequest;
+		[HTTP.Unauthorized]: Unauthorized;
+		[HTTP.Forbidden]: Forbidden;
+		[HTTP.NotFound]: EmptyResponse;
+	}
+>("/projects/{projectUUID}/task/move");
 
 export const TaskDelete = DELETE<
 	[ProjectUUID, TaskID],
