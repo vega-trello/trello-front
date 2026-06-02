@@ -1,0 +1,12 @@
+{
+	"rewrites": [
+		{
+			"source": "/trello-front",
+			"destination": "/index.html"
+		},
+		{
+			"source": "/trello-front/assets/:asset",
+			"destination": "/assets/:asset"
+		}
+	]
+}
