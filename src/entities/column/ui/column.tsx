@@ -12,6 +12,7 @@ import {
 	VStack,
 } from "@chakra-ui/react";
 import type {
+	Color,
 	Column,
 	UUID,
 } from "../../../shared/api/openapi/components/schemas";
@@ -23,6 +24,7 @@ import { useCallback } from "react";
 import { errorMessage, randomHexColor, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
 import {
+	colorDialog,
 	useColumn,
 	useDeleteColumn,
 	useMoveColumn,
@@ -74,11 +76,11 @@ function ColumnMenu({
 	const handleMoveRight = useCallback(() => move("right"), [move]);
 
 	const handleRename = useCallback(() => {
-		renameDialog.open("edit", { column });
+		renameDialog.open(`column-edit-${column.id}`, { column });
 	}, [column]);
 
 	const handleDelete = useCallback(() => {
-		deleteDialog.open(`column-${column.id}`, { callback: _delete });
+		deleteDialog.open(`column-delete-${column.id}`, { callback: _delete });
 	}, [column, _delete]);
 
 	const handleAddColor = useCallback(() => {
@@ -86,14 +88,16 @@ function ColumnMenu({
 			{
 				columnID: column.id,
 				name: column.name,
-				color: randomHexColor(),
+				color: (randomHexColor() + "C0") as Color,
 			},
 			{
 				onError: (err) => toaster.error(errorMessage(err)),
 			},
 		);
 	}, [updateColumn, column]);
-	const handleChangeColor = useCallback(() => {}, []);
+	const handleChangeColor = useCallback(() => {
+		colorDialog.open(`column-color-${column.id}`, { column });
+	}, [column]);
 	const handleDeleteColor = useCallback(() => {
 		updateColumn.mutate(
 			{
@@ -142,6 +146,7 @@ function ColumnMenu({
 								<HiArrowRight />
 							</Menu.Item>
 						</Group>
+						<Menu.Separator />
 						<Menu.Item value="edit" onClick={handleRename}>
 							Переименовать
 						</Menu.Item>
@@ -159,6 +164,7 @@ function ColumnMenu({
 								</Menu.Item>
 							</>
 						)}
+						<Menu.Separator />
 						<Menu.Item
 							value="delete"
 							color="fg.error"
@@ -194,7 +200,7 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	return (
 		<Box
 			ref={ref}
-			bg={column.color ? column.color + "C8" : "bg.subtle"}
+			bg={column.color ?? "bg.subtle"}
 			borderRadius="lg"
 			p="2"
 			width="100%"

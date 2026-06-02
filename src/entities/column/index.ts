@@ -8,3 +8,4 @@ export {
 } from "./model/use-column-mutation";
 export { deleteDialog } from "./ui/delete-dialog";
 export { renameDialog } from "./ui/rename-dialog";
+export { colorDialog } from "./ui/color-dialog";

@@ -45,9 +45,6 @@ export const renameDialog = createOverlay<{ column: Column }>(
 					<Dialog.Backdrop />
 					<Dialog.Positioner>
 						<Dialog.Content>
-							<Dialog.Header>
-								<Dialog.Title>Новая колонка</Dialog.Title>
-							</Dialog.Header>
 							<Dialog.Body>
 								<Stack gap="4">
 									<Field.Root>

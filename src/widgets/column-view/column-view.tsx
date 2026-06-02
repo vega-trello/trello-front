@@ -3,7 +3,7 @@ import { useColumns, Column } from "../../entities/column";
 import type { UUID } from "../../shared/api/openapi/components/schemas";
 import { ErrorAlert, Loader } from "../";
 import { AddColumnButton } from "./add-column-button";
-import { deleteDialog, renameDialog } from "../../entities/column";
+import { deleteDialog, renameDialog, colorDialog } from "../../entities/column";
 import { useCallback, type PropsWithChildren } from "react";
 import { errorMessage, toaster, useTitle } from "../../shared";
 import { DragDropProvider, type DragEndEvent } from "@dnd-kit/react";
@@ -61,6 +61,7 @@ export function ColumnView({ projectUUID }: { projectUUID: UUID }) {
 		>
 			<renameDialog.Viewport />
 			<deleteDialog.Viewport />
+			<colorDialog.Viewport />
 			<DragDropProvider onDragEnd={handleDrop}>
 				<For each={columns}>
 					{(column) => (
