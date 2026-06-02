@@ -6,7 +6,7 @@ import type {
 } from "../components/parameters/parameter";
 import type { Response as _Response } from "../components/responses/response";
 
-const base = `${window.location.protocol}//${window.location.hostname}:8080${import.meta.env.MODE === "gh-pages" ? "/trello-front" : ""}`;
+const base = `${window.location.protocol}//${window.location.hostname}:8080`;
 
 type Transform<T extends Record<number, _Response<unknown>>> = {
 	[K in keyof T]: T[K] & {
