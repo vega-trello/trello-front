@@ -80,9 +80,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.24.0
         version: 3.24.0
-      character-count:
-        specifier: link:@tiptap/extensions/character-count
-        version: link:@tiptap/extensions/character-count
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

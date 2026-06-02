@@ -20,9 +20,14 @@ import { TaskCard, useTasks } from "../../task";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import { ErrorAlert } from "../../../widgets";
 import { useCallback } from "react";
-import { errorMessage, toaster } from "../../../shared";
+import { errorMessage, randomHexColor, toaster } from "../../../shared";
 import { AddTaskButton } from "./add-task-button";
-import { useColumn, useDeleteColumn, useMoveColumn } from "../";
+import {
+	useColumn,
+	useDeleteColumn,
+	useMoveColumn,
+	useUpdateColumn,
+} from "../";
 import { renameDialog } from "./rename-dialog";
 import { deleteDialog } from "./delete-dialog";
 import { useDroppable } from "@dnd-kit/react";
@@ -40,6 +45,7 @@ function ColumnMenu({
 	column: Column;
 }) {
 	const deleteColumn = useDeleteColumn(projectUUID);
+	const updateColumn = useUpdateColumn();
 	const moveColumn = useMoveColumn();
 	const move = useCallback(
 		(direction: "right" | "left") => {
@@ -74,6 +80,32 @@ function ColumnMenu({
 	const handleDelete = useCallback(() => {
 		deleteDialog.open(`column-${column.id}`, { callback: _delete });
 	}, [column, _delete]);
+
+	const handleAddColor = useCallback(() => {
+		updateColumn.mutate(
+			{
+				columnID: column.id,
+				name: column.name,
+				color: randomHexColor(),
+			},
+			{
+				onError: (err) => toaster.error(errorMessage(err)),
+			},
+		);
+	}, [updateColumn, column]);
+	const handleChangeColor = useCallback(() => {}, []);
+	const handleDeleteColor = useCallback(() => {
+		updateColumn.mutate(
+			{
+				columnID: column.id,
+				name: column.name,
+				color: null,
+			},
+			{
+				onError: (err) => toaster.error(errorMessage(err)),
+			},
+		);
+	}, [updateColumn, column]);
 
 	return (
 		<Menu.Root>
@@ -113,6 +145,20 @@ function ColumnMenu({
 						<Menu.Item value="edit" onClick={handleRename}>
 							Переименовать
 						</Menu.Item>
+						{column.color === null ? (
+							<Menu.Item value="add-color" onClick={handleAddColor}>
+								Добавить цвет
+							</Menu.Item>
+						) : (
+							<>
+								<Menu.Item value="change-color" onClick={handleChangeColor}>
+									Изменить цвет
+								</Menu.Item>
+								<Menu.Item value="delete-color" onClick={handleDeleteColor}>
+									Удалить цвет
+								</Menu.Item>
+							</>
+						)}
 						<Menu.Item
 							value="delete"
 							color="fg.error"
@@ -148,7 +194,7 @@ export function Column({ projectUUID, columnID }: ColumnProps) {
 	return (
 		<Box
 			ref={ref}
-			bg="bg.subtle"
+			bg={column.color ? column.color + "C8" : "bg.subtle"}
 			borderRadius="lg"
 			p="2"
 			width="100%"
