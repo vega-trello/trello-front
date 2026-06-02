@@ -72,7 +72,6 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 
 export function RoleView({ projectUUID }: { projectUUID: UUID }) {
 	const { data: roles, isPending, isError, error } = useRoles(projectUUID);
-	console.log({ roles });
 	const createRole = useCreateRole();
 	useTitle("Роли");
 

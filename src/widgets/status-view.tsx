@@ -172,16 +172,13 @@ export function StatusView({ projectUUID }: { projectUUID: UUID }) {
 
 				<Box display="flex" flexDirection="column" gap="2">
 					<For each={status}>
-						{(status) => {
-							console.log(status);
-							return (
-								<Status
-									key={status.id}
-									status={status}
-									projectUUID={projectUUID}
-								/>
-							);
-						}}
+						{(status) => (
+							<Status
+								key={status.id}
+								status={status}
+								projectUUID={projectUUID}
+							/>
+						)}
 					</For>
 				</Box>
 
