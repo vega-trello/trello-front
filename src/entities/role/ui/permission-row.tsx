@@ -8,6 +8,13 @@ type PermissionRowProps = {
 	onToggle: (id: integer) => void;
 };
 
+function toDisplayName(str: string): string {
+	return str
+		.split("_")
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(" ");
+}
+
 export function PermissionRow({
 	permission,
 	checked,
@@ -19,26 +26,24 @@ export function PermissionRow({
 				checked={checked}
 				onCheckedChange={() => onToggle(permission.id)}
 				mt={0.5}
+				flexGrow={1}
 			>
 				<Switch.HiddenInput />
 				<Switch.Control />
-				<Switch.Label>
-					<Flex
-						flexDirection="column"
-						gap="0.5"
-						flex={1}
-						cursor="pointer"
-						as="label"
-					>
-						<Text fontSize="sm" fontWeight={500}>
-							{permission.name}
+				<Switch.Label
+					flexDirection="column"
+					gap="0.5"
+					cursor="pointer"
+					flexGrow={1}
+				>
+					<Text fontSize="sm" fontWeight={500}>
+						{toDisplayName(permission.name)}
+					</Text>
+					{permission.description && (
+						<Text fontSize="xs" color="gray.500">
+							{permission.description}
 						</Text>
-						{permission.description && (
-							<Text fontSize="xs" color="gray.500">
-								{permission.description}
-							</Text>
-						)}
-					</Flex>
+					)}
 				</Switch.Label>
 			</Switch.Root>
 		</Flex>
