@@ -85,27 +85,6 @@ export function TaskModifiers({
 					<HiOutlineEye />
 				</Badge>
 			)}
-			{/* {modifiers.deadline && (
-				<Box display="flex" alignItems="center" whiteSpace="nowrap" gap="0.5">
-					<HiOutlineClock color={deadlineColor} />
-					<Text
-						fontSize="sm"
-						fontWeight="medium"
-						lineHeight={1}
-						color={deadlineColor}
-					>
-						{task.start_date && (
-							<>{formatShortDate(new Date(task.start_date))} — </>
-						)}
-						{modifiers.deadline}
-					</Text>
-					{daysUntil !== null && daysUntil <= 3 && (
-						<Badge variant="surface" colorPalette="red">
-							{daysUntil <= 0 ? "просрочено" : `${daysUntil} дн`}
-						</Badge>
-					)}
-				</Box>
-			)} */}
 			{description && (
 				<Badge variant="outline" size="md">
 					<HiOutlineMenuAlt2 />

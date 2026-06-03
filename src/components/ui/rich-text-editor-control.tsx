@@ -3,6 +3,7 @@
 import type { IconButtonProps } from "@chakra-ui/react";
 import {
 	Box,
+	Button,
 	CloseButton,
 	ColorSwatch,
 	HStack,
@@ -77,8 +78,6 @@ export const ButtonControl = React.forwardRef<
 	);
 });
 
-///////////////////// Boolean Control /////////////////////
-
 export interface BooleanControlConfig extends BaseControlConfig {
 	icon: React.ElementType;
 	command: (editor: Editor) => void;
@@ -121,8 +120,6 @@ export function createBooleanControl(config: BooleanControlConfig) {
 	BooleanControl.displayName = `BooleanControl(${label})`;
 	return BooleanControl;
 }
-
-///////////////////// Select Control (with options) /////////////////////
 
 export interface SelectOption {
 	value: string;
@@ -224,8 +221,6 @@ export function createSelectControl(config: SelectControlConfig) {
 	SelectControl.displayName = `SelectControl(${label})`;
 	return SelectControl;
 }
-
-///////////////////// Swatch Control (with color swatches) /////////////////////
 
 export interface SwatchOption {
 	value: string;
@@ -617,9 +612,6 @@ export const TextStyle = createSelectControl({
 	},
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ClearFormatting
-// ─────────────────────────────────────────────────────────────────────────────
 export const ClearFormatting = createBooleanControl({
 	label: "Clear Formatting",
 	icon: LuEraser,
@@ -655,7 +647,6 @@ export const Image = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 		const [open, setOpen] = React.useState(false);
 		const [url, setUrl] = React.useState("");
 		const fileInputRef = React.useRef<HTMLInputElement>(null);
-		const triggerId = React.useId();
 
 		if (!editor) return null;
 
@@ -689,25 +680,24 @@ export const Image = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 					setOpen(e.open);
 					if (!e.open) setUrl("");
 				}}
-				ids={{ trigger: triggerId }}
 				size="sm"
-				positioning={{ strategy: "fixed", hideWhenDetached: true }}
 			>
-				<Tooltip content="Insert Image" ids={{ trigger: triggerId }}>
-					<Popover.Trigger asChild>
-						<IconButton
-							ref={ref}
-							size="2xs"
-							aria-label="Insert Image"
-							variant="ghost"
-							{...props}
-						>
-							<LuImage />
-						</IconButton>
-					</Popover.Trigger>
+				<Tooltip content="Insert Image">
+					<Box>
+						<Popover.Trigger asChild>
+							<IconButton
+								ref={ref}
+								size="2xs"
+								aria-label="Insert Image"
+								variant="ghost"
+								{...props}
+							>
+								<LuImage />
+							</IconButton>
+						</Popover.Trigger>
+					</Box>
 				</Tooltip>
 
-				{/* <Portal> */}
 				<Popover.Positioner>
 					<Popover.Content width="xs">
 						<Popover.Body>
@@ -761,7 +751,6 @@ export const Image = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 						</Popover.Body>
 					</Popover.Content>
 				</Popover.Positioner>
-				{/* </Portal> */}
 			</Popover.Root>
 		);
 	},
