@@ -3,7 +3,6 @@
 import type { IconButtonProps } from "@chakra-ui/react";
 import {
 	Box,
-	Button,
 	CloseButton,
 	ColorSwatch,
 	HStack,
