@@ -9,7 +9,7 @@
 		"dev-test": "vite --mode test",
 		"build": "tsc -b && vite build --mode prod",
 		"lint": "eslint .",
-		"preview": "vite preview",
+		"preview": "vite preview --port 5173",
 		"predeploy": "tsc -b && vite build --mode gh-pages",
 		"deploy": "gh-pages -d dist"
 	},
