@@ -1,17 +1,15 @@
 # ----------------------------------- Build ---------------------------------- #
 FROM node:22-alpine AS builder
 
-RUN npm install -g pnpm
-
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN pnpm install --frozen-lockfile
+RUN npx pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm build
+RUN npx pnpm build
 
 # ----------------------------------- Serve ---------------------------------- #
 FROM nginx:1.27-alpine AS runner
