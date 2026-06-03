@@ -13,7 +13,7 @@ export function Header() {
 			<div className="inner">
 				<div className="left">
 					<NavLink to="/" end style={{ color: "inherit" }}>
-						<Heading id="title">Trega</Heading>
+						<Heading id="title">Vrello</Heading>
 					</NavLink>
 				</div>
 				{heading}
