@@ -43,7 +43,6 @@ import {
 	LuType,
 	LuUnderline,
 	LuEraser,
-	LuTable,
 	LuImage,
 	LuFileCode2,
 	LuCheck,
@@ -649,98 +648,6 @@ export const HorizontalRule = createBooleanControl({
 	command: (editor) => editor.chain().focus().setHorizontalRule().run(),
 	getVariant: () => "ghost",
 });
-
-const GRID_SIZE = 6;
-
-function TableGridPicker({
-	onPick,
-}: {
-	onPick: (rows: number, cols: number) => void;
-}) {
-	const [hover, setHover] = React.useState<[number, number]>([0, 0]);
-
-	return (
-		<VStack gap="1" align="start">
-			<Box fontSize="xs" color="fg.muted" mb="1">
-				{hover[0] > 0 ? `${hover[0]} × ${hover[1]}` : "Select table size"}
-			</Box>
-			{Array.from({ length: GRID_SIZE }, (_, r) => (
-				<HStack key={r} gap="1">
-					{Array.from({ length: GRID_SIZE }, (_, c) => (
-						<Box
-							key={c}
-							w="4"
-							h="4"
-							borderWidth="1px"
-							borderRadius="sm"
-							cursor="pointer"
-							bg={
-								r < hover[0] && c < hover[1]
-									? "colorPalette.solid"
-									: "bg.subtle"
-							}
-							onMouseEnter={() => setHover([r + 1, c + 1])}
-							onClick={() => onPick(r + 1, c + 1)}
-						/>
-					))}
-				</HStack>
-			))}
-		</VStack>
-	);
-}
-
-export const InsertTable = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-	function InsertTable(props, ref) {
-		const { editor } = useRichTextEditorContext();
-		const [open, setOpen] = React.useState(false);
-		const triggerId = React.useId();
-
-		if (!editor) return null;
-
-		return (
-			<Popover.Root
-				open={open}
-				onOpenChange={(e) => setOpen(e.open)}
-				ids={{ trigger: triggerId }}
-				size="sm"
-				positioning={{ strategy: "fixed", hideWhenDetached: true }}
-			>
-				<Tooltip content="Insert Table" ids={{ trigger: triggerId }}>
-					<Popover.Trigger asChild>
-						<IconButton
-							ref={ref}
-							size="2xs"
-							aria-label="Insert Table"
-							variant={editor.isActive("table") ? "subtle" : "ghost"}
-							{...props}
-						>
-							<LuTable />
-						</IconButton>
-					</Popover.Trigger>
-				</Tooltip>
-
-				{/* <Portal> */}
-				<Popover.Positioner>
-					<Popover.Content width="auto">
-						<Popover.Body>
-							<TableGridPicker
-								onPick={(rows, cols) => {
-									editor
-										.chain()
-										.focus()
-										.insertTable({ rows, cols, withHeaderRow: true })
-										.run();
-									setOpen(false);
-								}}
-							/>
-						</Popover.Body>
-					</Popover.Content>
-				</Popover.Positioner>
-				{/* </Portal> */}
-			</Popover.Root>
-		);
-	},
-);
 
 export const Image = React.forwardRef<HTMLButtonElement, IconButtonProps>(
 	function Image(props, ref) {

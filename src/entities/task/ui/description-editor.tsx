@@ -58,10 +58,6 @@ export function DescriptionEditor({ editor, defaultValue }: DescriptionEditor) {
 				</RichTextEditor.ControlGroup>
 
 				<RichTextEditor.ControlGroup>
-					<Control.InsertTable />
-				</RichTextEditor.ControlGroup>
-
-				<RichTextEditor.ControlGroup>
 					<Control.Image />
 				</RichTextEditor.ControlGroup>
 
@@ -70,7 +66,7 @@ export function DescriptionEditor({ editor, defaultValue }: DescriptionEditor) {
 					<Control.Redo />
 				</RichTextEditor.ControlGroup>
 			</RichTextEditor.Toolbar>
-			<RichTextEditor.Content />
+			<RichTextEditor.Content style={{ minHeight: "12rem" }} />
 		</RichTextEditor.Root>
 	);
 }

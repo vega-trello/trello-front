@@ -337,7 +337,7 @@ export function TaskEditor({
 						<Dialog.Body>
 							<Box
 								display="grid"
-								gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
+								gridTemplateColumns={{ base: "1fr", md: "7fr 3fr" }}
 								gap="6"
 								css={{
 									"@media (min-width: 768px)": {
@@ -360,21 +360,6 @@ export function TaskEditor({
 											}
 											size="xl"
 											ref={titleRef}
-										/>,
-									)}
-									{Item(
-										<>
-											<HiOutlineViewColumns /> Колонка
-										</>,
-										<ColumnSelect
-											projectUUID={projectUUID}
-											value={task.column_id.toString()}
-											setValue={(v) =>
-												setTask((t) => ({
-													...t,
-													column_id: parseInt(v),
-												}))
-											}
 										/>,
 									)}
 									{Item("Создал", <Text>{user?.username}</Text>)}
@@ -416,6 +401,21 @@ export function TaskEditor({
 												</IconButton>
 											</AddTagPopover>
 										</Box>,
+									)}
+									{Item(
+										<>
+											<HiOutlineViewColumns /> Колонка
+										</>,
+										<ColumnSelect
+											projectUUID={projectUUID}
+											value={task.column_id.toString()}
+											setValue={(v) =>
+												setTask((t) => ({
+													...t,
+													column_id: parseInt(v),
+												}))
+											}
+										/>,
 									)}
 									{Item(
 										<>
