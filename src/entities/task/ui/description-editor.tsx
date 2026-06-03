@@ -15,7 +15,11 @@ export type DescriptionEditor = {
 
 export function DescriptionEditor({ editor, defaultValue }: DescriptionEditor) {
 	return (
-		<RichTextEditor.Root editor={editor} defaultValue={defaultValue}>
+		<RichTextEditor.Root
+			editor={editor}
+			defaultValue={defaultValue}
+			minHeight="7rem"
+		>
 			<RichTextEditor.Toolbar>
 				<RichTextEditor.ControlGroup>
 					<Control.H1 />

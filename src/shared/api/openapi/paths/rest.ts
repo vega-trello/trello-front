@@ -75,7 +75,7 @@ export function GET<
 			method: "GET",
 			signal,
 		});
-		const body = parseBody(res);
+		const body = await parseBody(res);
 
 		return {
 			status: res.status,
@@ -108,7 +108,7 @@ export function POST<
 			body: JSON.stringify(body),
 			signal,
 		});
-		const data = parseBody(res);
+		const data = await parseBody(res);
 
 		return {
 			status: res.status,
@@ -141,7 +141,7 @@ export function PATCH<
 			body: JSON.stringify(body),
 			signal,
 		});
-		const data = parseBody(res);
+		const data = await parseBody(res);
 
 		return {
 			status: res.status,
@@ -171,7 +171,7 @@ export function DELETE<
 			method: "DELETE",
 			signal,
 		});
-		const body = parseBody(res);
+		const body = await parseBody(res);
 
 		return {
 			status: res.status,

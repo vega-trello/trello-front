@@ -122,7 +122,7 @@ export function TaskEditor({
 			TextStyle,
 			Color,
 		],
-		editable: false,
+		editable: true,
 		immediatelyRender: false,
 	});
 
@@ -271,12 +271,17 @@ export function TaskEditor({
 			<Portal>
 				<Dialog.Backdrop />
 				<Dialog.Positioner>
-					<Dialog.Content>
+					<Dialog.Content
+						// Double width, but capped so it doesn't overflow on small screens
+						width={{ base: "95vw", md: "min(90vw, 900px)" }}
+						maxWidth="900px"
+					>
+						{/* ── Colour banner ── */}
 						<Box
 							height="128px"
 							bg={task.color ?? undefined}
 							display="flex"
-							justifyContent='space-between'
+							justifyContent="space-between"
 							alignItems="flex-end"
 							px="6"
 							py="2"
@@ -327,133 +332,155 @@ export function TaskEditor({
 								</>
 							)}
 						</Box>
+
+						{/* ── Two-column body ── */}
 						<Dialog.Body>
-							<DataList.Root>
-								{Item(
-									<></>,
-									<Input
-										variant="flushed"
-										defaultValue={
-											_task.title === null ? undefined : _task.title
-										}
-										size="xl"
-										ref={titleRef}
-									/>,
-								)}
-								{Item(
-									<>
-										<HiOutlineTag /> Тэги
-									</>,
-									<Box display="flex" gap="2" flexWrap="wrap">
-										<For each={tags}>
-											{(tag) => (
-												<ClickableTag
-													key={tag.id}
-													tag={tag}
-													callback={() =>
-														setTags((t) => t.filter((t) => t.id !== tag.id))
-													}
-												/>
-											)}
-										</For>
-										<AddTagPopover
+							<Box
+								display="grid"
+								gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
+								gap="6"
+								css={{
+									"@media (min-width: 768px)": {
+										"& > :first-child": {
+											borderRight: "1px solid",
+											borderColor: "border.muted",
+											paddingRight: "6",
+										},
+									},
+								}}
+							>
+								{/* ── LEFT column: title, status, column, creator ── */}
+								<DataList.Root>
+									{Item(
+										<></>,
+										<Input
+											variant="flushed"
+											defaultValue={
+												_task.title === null ? undefined : _task.title
+											}
+											size="xl"
+											ref={titleRef}
+										/>,
+									)}
+									{Item(
+										<>
+											<HiOutlineViewColumns /> Колонка
+										</>,
+										<ColumnSelect
 											projectUUID={projectUUID}
-											tags={tags}
-											setTags={setTags}
+											value={task.column_id.toString()}
+											setValue={(v) =>
+												setTask((t) => ({
+													...t,
+													column_id: parseInt(v),
+												}))
+											}
+										/>,
+									)}
+									{Item("Создал", <Text>{user?.username}</Text>)}
+									{Item(
+										<>
+											<HiOutlineMenuAlt2 /> Описание
+										</>,
+										<DescriptionEditor
+											editor={editor}
+											defaultValue={_task.description ?? undefined}
+										/>,
+									)}
+								</DataList.Root>
+
+								<DataList.Root>
+									{Item(
+										<>
+											<HiOutlineTag /> Тэги
+										</>,
+										<Box display="flex" gap="2" flexWrap="wrap">
+											<For each={tags}>
+												{(tag) => (
+													<ClickableTag
+														key={tag.id}
+														tag={tag}
+														callback={() =>
+															setTags((t) => t.filter((t) => t.id !== tag.id))
+														}
+													/>
+												)}
+											</For>
+											<AddTagPopover
+												projectUUID={projectUUID}
+												tags={tags}
+												setTags={setTags}
+											>
+												<IconButton variant="outline" size="sm">
+													<MdAdd />
+												</IconButton>
+											</AddTagPopover>
+										</Box>,
+									)}
+									{Item(
+										<>
+											<HiOutlineCheck />
+											Статус
+										</>,
+										<StatusSelect
+											projectUUID={projectUUID}
+											value={task.status_id?.toString()}
+											setValue={(v) =>
+												setTask((t) => ({
+													...t,
+													status_id: v === undefined ? null : parseInt(v),
+												}))
+											}
+										/>,
+									)}
+									{Item(
+										"Участники",
+										<AssigneesView
+											projectUUID={projectUUID}
+											value={assigneesUUIDs}
+											setValue={setAssigneesUUIDs}
+										/>,
+									)}
+									{Item(
+										<>
+											<HiOutlineCalendar />
+											Начало
+										</>,
+										<DatetimePicker
+											value={task.start_date ?? undefined}
+											setValue={(v) =>
+												setTask((t) => ({ ...t, start_date: v ?? null }))
+											}
+										/>,
+									)}
+									{Item(
+										<>
+											<HiOutlineCalendar />
+											Дедлайн
+										</>,
+										<DatetimePicker
+											value={task.end_date ?? undefined}
+											setValue={(v) =>
+												setTask((t) => ({ ...t, end_date: v ?? null }))
+											}
+										/>,
+									)}
+									{Item(
+										<></>,
+										<Checkbox.Root
+											size="sm"
+											checked={archived}
+											onCheckedChange={(e) => setArchived(!!e.checked)}
 										>
-											<IconButton variant="outline" size="sm">
-												<MdAdd />
-											</IconButton>
-										</AddTagPopover>
-									</Box>,
-								)}
-								{Item(
-									<>
-										<HiOutlineCheck />
-										Статус
-									</>,
-									<StatusSelect
-										projectUUID={projectUUID}
-										value={task.status_id?.toString()}
-										setValue={(v) =>
-											setTask((t) => ({
-												...t,
-												status_id: v === undefined ? null : parseInt(v),
-											}))
-										}
-									/>,
-								)}
-								{Item(
-									<>
-										<HiOutlineViewColumns /> Колонка
-									</>,
-									<ColumnSelect
-										projectUUID={projectUUID}
-										value={task.column_id.toString()}
-										setValue={(v) =>
-											setTask((t) => ({
-												...t,
-												column_id: parseInt(v),
-											}))
-										}
-									/>,
-								)}
-								{Item("Создал", <Text>{user?.username}</Text>)}
-								{Item(
-									"Участники",
-									<AssigneesView
-										projectUUID={projectUUID}
-										value={assigneesUUIDs}
-										setValue={setAssigneesUUIDs}
-									/>,
-								)}
-								{Item(
-									<>
-										<HiOutlineCalendar />
-										Начало
-									</>,
-									<DatetimePicker
-										value={task.start_date ?? undefined}
-										setValue={(v) =>
-											setTask((t) => ({ ...t, start_date: v ?? null }))
-										}
-									/>,
-								)}
-								{Item(
-									<>
-										<HiOutlineCalendar />
-										Дедлайн
-									</>,
-									<DatetimePicker
-										value={task.end_date ?? undefined}
-										setValue={(v) =>
-											setTask((t) => ({ ...t, end_date: v ?? null }))
-										}
-									/>,
-								)}
-								{Item(
-									<>
-										<HiOutlineMenuAlt2 /> Описание
-									</>,
-									<DescriptionEditor
-										editor={editor}
-										defaultValue={_task.description ?? undefined}
-									/>,
-								)}
-								{Item(
-									<></>,
-									<Checkbox.Root
-										size="sm"
-										checked={archived}
-										onCheckedChange={(e) => setArchived(!!e.checked)}
-									>
-										<Checkbox.HiddenInput />
-										<Checkbox.Control />
-										<Checkbox.Label>Архивирована</Checkbox.Label>
-									</Checkbox.Root>,
-								)}
-							</DataList.Root>
+											<Checkbox.HiddenInput />
+											<Checkbox.Control />
+											<Checkbox.Label>Архивирована</Checkbox.Label>
+										</Checkbox.Root>,
+									)}
+								</DataList.Root>
+							</Box>
 						</Dialog.Body>
+
 						<Dialog.Footer>
 							<Button loading={pending} onClick={update}>
 								Сохранить
@@ -464,4 +491,211 @@ export function TaskEditor({
 			</Portal>
 		</Dialog.Root>
 	);
+
+	// return (
+	// 	<Dialog.Root
+	// 		key={_task.id}
+	// 		motionPreset="slide-in-bottom"
+	// 		open={open}
+	// 		onOpenChange={handleOpenChange}
+	// 	>
+	// 		<Dialog.Trigger display="contents" as="div">
+	// 			{children}
+	// 		</Dialog.Trigger>
+	// 		<Portal>
+	// 			<Dialog.Backdrop />
+	// 			<Dialog.Positioner>
+	// 				<Dialog.Content>
+	// 					<Box
+	// 						height="128px"
+	// 						bg={task.color ?? undefined}
+	// 						display="flex"
+	// 						justifyContent="space-between"
+	// 						alignItems="flex-end"
+	// 						px="6"
+	// 						py="2"
+	// 						borderColor="border.emphasized"
+	// 						borderWidth="thin"
+	// 						borderTop="none"
+	// 						borderInline="none"
+	// 					>
+	// 						{task.color === null ? (
+	// 							<Button
+	// 								variant="surface"
+	// 								onClick={() =>
+	// 									setTask((t) => ({ ...t, color: randomHexColor() }))
+	// 								}
+	// 							>
+	// 								Добавить цвет
+	// 							</Button>
+	// 						) : (
+	// 							<>
+	// 								<ColorPicker.Root
+	// 									value={parseColor(task.color)}
+	// 									onValueChange={(e) =>
+	// 										setTask((t) => ({
+	// 											...t,
+	// 											color: e.value.toString("hex") as TColor,
+	// 										}))
+	// 									}
+	// 									format="hsla"
+	// 								>
+	// 									<ColorPicker.HiddenInput />
+	// 									<ColorPicker.Control>
+	// 										<ColorPicker.Trigger />
+	// 										<ColorPicker.Input bg="bg.muted" />
+	// 									</ColorPicker.Control>
+	// 									<ColorPicker.Positioner>
+	// 										<ColorPicker.Content>
+	// 											<ColorPicker.Area />
+	// 											<ColorPicker.Sliders />
+	// 										</ColorPicker.Content>
+	// 									</ColorPicker.Positioner>
+	// 								</ColorPicker.Root>
+	// 								<Button
+	// 									variant="surface"
+	// 									onClick={() => setTask((t) => ({ ...t, color: null }))}
+	// 								>
+	// 									Удалить цвет
+	// 								</Button>
+	// 							</>
+	// 						)}
+	// 					</Box>
+	// 					<Dialog.Body>
+	// 						<DataList.Root>
+	// 							{Item(
+	// 								<></>,
+	// 								<Input
+	// 									variant="flushed"
+	// 									defaultValue={
+	// 										_task.title === null ? undefined : _task.title
+	// 									}
+	// 									size="xl"
+	// 									ref={titleRef}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineTag /> Тэги
+	// 								</>,
+	// 								<Box display="flex" gap="2" flexWrap="wrap">
+	// 									<For each={tags}>
+	// 										{(tag) => (
+	// 											<ClickableTag
+	// 												key={tag.id}
+	// 												tag={tag}
+	// 												callback={() =>
+	// 													setTags((t) => t.filter((t) => t.id !== tag.id))
+	// 												}
+	// 											/>
+	// 										)}
+	// 									</For>
+	// 									<AddTagPopover
+	// 										projectUUID={projectUUID}
+	// 										tags={tags}
+	// 										setTags={setTags}
+	// 									>
+	// 										<IconButton variant="outline" size="sm">
+	// 											<MdAdd />
+	// 										</IconButton>
+	// 									</AddTagPopover>
+	// 								</Box>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineCheck />
+	// 									Статус
+	// 								</>,
+	// 								<StatusSelect
+	// 									projectUUID={projectUUID}
+	// 									value={task.status_id?.toString()}
+	// 									setValue={(v) =>
+	// 										setTask((t) => ({
+	// 											...t,
+	// 											status_id: v === undefined ? null : parseInt(v),
+	// 										}))
+	// 									}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineViewColumns /> Колонка
+	// 								</>,
+	// 								<ColumnSelect
+	// 									projectUUID={projectUUID}
+	// 									value={task.column_id.toString()}
+	// 									setValue={(v) =>
+	// 										setTask((t) => ({
+	// 											...t,
+	// 											column_id: parseInt(v),
+	// 										}))
+	// 									}
+	// 								/>,
+	// 							)}
+	// 							{Item("Создал", <Text>{user?.username}</Text>)}
+	// 							{Item(
+	// 								"Участники",
+	// 								<AssigneesView
+	// 									projectUUID={projectUUID}
+	// 									value={assigneesUUIDs}
+	// 									setValue={setAssigneesUUIDs}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineCalendar />
+	// 									Начало
+	// 								</>,
+	// 								<DatetimePicker
+	// 									value={task.start_date ?? undefined}
+	// 									setValue={(v) =>
+	// 										setTask((t) => ({ ...t, start_date: v ?? null }))
+	// 									}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineCalendar />
+	// 									Дедлайн
+	// 								</>,
+	// 								<DatetimePicker
+	// 									value={task.end_date ?? undefined}
+	// 									setValue={(v) =>
+	// 										setTask((t) => ({ ...t, end_date: v ?? null }))
+	// 									}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<>
+	// 									<HiOutlineMenuAlt2 /> Описание
+	// 								</>,
+	// 								<DescriptionEditor
+	// 									editor={editor}
+	// 									defaultValue={_task.description ?? undefined}
+	// 								/>,
+	// 							)}
+	// 							{Item(
+	// 								<></>,
+	// 								<Checkbox.Root
+	// 									size="sm"
+	// 									checked={archived}
+	// 									onCheckedChange={(e) => setArchived(!!e.checked)}
+	// 								>
+	// 									<Checkbox.HiddenInput />
+	// 									<Checkbox.Control />
+	// 									<Checkbox.Label>Архивирована</Checkbox.Label>
+	// 								</Checkbox.Root>,
+	// 							)}
+	// 						</DataList.Root>
+	// 					</Dialog.Body>
+	// 					<Dialog.Footer>
+	// 						<Button loading={pending} onClick={update}>
+	// 							Сохранить
+	// 						</Button>
+	// 					</Dialog.Footer>
+	// 				</Dialog.Content>
+	// 			</Dialog.Positioner>
+	// 		</Portal>
+	// 	</Dialog.Root>
+	// );
 }
