@@ -71,7 +71,7 @@ export function SSOButton() {
 			colorPalette="blue"
 			loading={isLoading}
 		>
-			Вход через Vega SSO
+			Вход через Вега SSO
 		</Button>
 	);
 }

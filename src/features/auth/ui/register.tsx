@@ -5,9 +5,10 @@ import {
 	Field,
 	Heading,
 	Input,
+	Link as ChakraLink,
 	Stack,
 } from "@chakra-ui/react";
-import { NavLink, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { errorMessage, PasswordInput, toaster } from "../../../shared";
 import { useCallback, useState } from "react";
 import { useRegister } from "../../../entities/user";
@@ -65,7 +66,10 @@ export function Register() {
 							/>
 						</Field.Root>
 						<span style={{ textAlign: "center" }}>
-							Уже есть аккаунт? <NavLink to="/login">Войти</NavLink>
+							Уже есть аккаунт?{" "}
+							<ChakraLink variant="underline" colorPalette="blue" asChild>
+								<Link to="/login">Войти</Link>
+							</ChakraLink>
 						</span>
 						<SSOButton />
 						<Button type="submit">Продолжить</Button>

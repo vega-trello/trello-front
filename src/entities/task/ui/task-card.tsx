@@ -83,6 +83,7 @@ export function TaskCard({ task, projectUUID }: TaskCardProps) {
 				borderRadius="sm"
 				borderColor="border.emphasized"
 				borderWidth="thin"
+				bg='bg.panel'
 				_hover={{ bg: "bg.muted", cursor: "pointer" }}
 				css={{
 					"&:hover .foldable-tag": {

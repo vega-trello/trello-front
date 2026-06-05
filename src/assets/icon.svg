@@ -1,49 +1,22 @@
 <svg width="100%" viewBox="80 80 520 520" role="img" xmlns="http://www.w3.org/2000/svg">
-  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Vrello logo icon</title>
-  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">A stylized T-shaped kanban board icon with a star/Vega motif, in deep indigo and violet tones</desc>
-  <defs>
-    
-  </defs>
-
-  <!-- Outer rounded square background -->
   <rect x="80" y="80" width="520" height="520" rx="96" fill="#1e1b4b" style="fill:rgb(30, 27, 75);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Subtle inner glow behind star -->
   <circle cx="340" cy="220" r="90" fill="#fde68a" opacity="0.07" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.07;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Three kanban columns -->
-  <!-- Left column -->
   <rect x="138" y="310" width="118" height="238" rx="14" fill="#4338ca" style="fill:rgb(67, 56, 202);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <!-- Cards in left col -->
   <rect x="152" y="326" width="90" height="28" rx="6" fill="rgba(255,255,255,0.22)" style="fill:rgba(255, 255, 255, 0.22);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <rect x="152" y="364" width="70" height="28" rx="6" fill="rgba(255,255,255,0.14)" style="fill:rgba(255, 255, 255, 0.14);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <rect x="152" y="402" width="80" height="28" rx="6" fill="rgba(255,255,255,0.14)" style="fill:rgba(255, 255, 255, 0.14);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Middle column -->
   <rect x="281" y="310" width="118" height="238" rx="14" fill="#6d28d9" style="fill:rgb(109, 40, 217);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <!-- Cards in mid col -->
   <rect x="295" y="326" width="90" height="28" rx="6" fill="rgba(255,255,255,0.22)" style="fill:rgba(255, 255, 255, 0.22);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <rect x="295" y="364" width="60" height="28" rx="6" fill="rgba(255,255,255,0.14)" style="fill:rgba(255, 255, 255, 0.14);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Right column -->
   <rect x="424" y="310" width="118" height="238" rx="14" fill="#9333ea" style="fill:rgb(147, 51, 234);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-  <!-- Cards in right col -->
   <rect x="438" y="326" width="90" height="28" rx="6" fill="rgba(255,255,255,0.22)" style="fill:rgba(255, 255, 255, 0.22);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <rect x="438" y="364" width="75" height="28" rx="6" fill="rgba(255,255,255,0.14)" style="fill:rgba(255, 255, 255, 0.14);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <rect x="438" y="402" width="55" height="28" rx="6" fill="rgba(255,255,255,0.14)" style="fill:rgba(255, 255, 255, 0.14);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Top bar connecting columns (like a board header) -->
   <rect x="138" y="278" width="404" height="24" rx="10" fill="#312e81" style="fill:rgb(49, 46, 129);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Vega / star shape centered at top of the board -->
-  <!-- 5-pointed star, golden -->
   <polygon points="&#xA;    340,142&#xA;    352,178&#xA;    390,178&#xA;    360,200&#xA;    372,236&#xA;    340,214&#xA;    308,236&#xA;    320,200&#xA;    290,178&#xA;    328,178&#xA;  " fill="#fde68a" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
-  <!-- Small sparkle dots around star -->
   <circle cx="260" cy="158" r="5" fill="#fde68a" opacity="0.55" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.55;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <circle cx="420" cy="158" r="5" fill="#fde68a" opacity="0.55" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.55;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <circle cx="244" cy="210" r="3.5" fill="#fde68a" opacity="0.35" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.35;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <circle cx="436" cy="210" r="3.5" fill="#fde68a" opacity="0.35" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.35;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
   <circle cx="340" cy="130" r="3" fill="#fde68a" opacity="0.4" style="fill:rgb(253, 230, 138);stroke:none;color:rgb(251, 251, 254);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:0.4;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
-
 </svg>

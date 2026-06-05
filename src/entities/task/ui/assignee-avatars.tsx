@@ -61,6 +61,7 @@ export function AssigneeAvatars({ assignees }: AssigneeAvatarsProps) {
 			gap="-1"
 			isolation="isolate"
 			ml="auto"
+			pr='1'
 		>
 			{visible.map((a, i) => (
 				<Avatar key={a.user_uuid} assignee={a} z={visible.length - i} />
