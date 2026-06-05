@@ -10,50 +10,56 @@ import { HeadingProvider, ThemeProvider } from "./shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RootRedirect } from "./widgets";
 
+const base = import.meta.env.BASE_URL ?? "/";
 const createRouter =
 	import.meta.env.MODE === "gh-pages" ? createHashRouter : createBrowserRouter;
 const queryClient = new QueryClient();
 
-const router = createRouter([
+const router = createRouter(
+	[
+		{
+			element: (
+				<QueryClientProvider client={queryClient}>
+					<ThemeProvider>
+						<HeadingProvider>
+							<App />
+						</HeadingProvider>
+					</ThemeProvider>
+				</QueryClientProvider>
+			),
+			children: [
+				{
+					index: true,
+					Component: RootRedirect,
+				},
+				{
+					element: <RequireGuest />,
+					children: [
+						{ path: "/login", Component: Login },
+						{ path: "/register", Component: Register },
+					],
+				},
+				{
+					element: <RequireAuth />,
+					children: [
+						{ path: "/account", Component: Account },
+						{
+							path: "/projects",
+							Component: Projects,
+						},
+						{
+							path: "/project/:uuid",
+							Component: Project,
+						},
+					],
+				},
+			],
+		},
+	],
 	{
-		element: (
-			<QueryClientProvider client={queryClient}>
-				<ThemeProvider>
-					<HeadingProvider>
-						<App />
-					</HeadingProvider>
-				</ThemeProvider>
-			</QueryClientProvider>
-		),
-		children: [
-			{
-				index: true,
-				Component: RootRedirect,
-			},
-			{
-				element: <RequireGuest />,
-				children: [
-					{ path: "/login", Component: Login },
-					{ path: "/register", Component: Register },
-				],
-			},
-			{
-				element: <RequireAuth />,
-				children: [
-					{ path: "/account", Component: Account },
-					{
-						path: "/projects",
-						Component: Projects,
-					},
-					{
-						path: "/project/:uuid",
-						Component: Project,
-					},
-				],
-			},
-		],
+		basename: base,
 	},
-]);
+);
 
 const root = document.getElementById("root")!;
 ReactDOM.createRoot(root).render(<RouterProvider router={router} />);

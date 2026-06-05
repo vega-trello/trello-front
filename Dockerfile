@@ -19,5 +19,5 @@ COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 ENV NGINX_BASE_PATH=/
 
-EXPOSE 80
+EXPOSE ${INTERNAL_FRONTEND_PORT:-80}
 CMD ["nginx", "-g", "daemon off;"]
