@@ -60,7 +60,7 @@ export const AuthRegister = POST<
 		[HTTP.BadRequest]: BadRequest;
 		[HTTP.Conflict]: Response<Error>;
 	}
->("/auth/register");
+>("auth/register");
 
 export const AuthLogin = POST<
 	[],
@@ -69,7 +69,7 @@ export const AuthLogin = POST<
 		[HTTP.OK]: Response<{ token: string }>;
 		[HTTP.Unauthorized]: Unauthorized;
 	}
->("/auth/login");
+>("auth/login");
 
 export const AuthLogout = POST<
 	[],
@@ -79,7 +79,7 @@ export const AuthLogout = POST<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.Forbidden]: Forbidden;
 	}
->("/auth/logout");
+>("auth/logout");
 
 export const AuthExchange = POST<
 	[],
@@ -89,7 +89,7 @@ export const AuthExchange = POST<
 		[HTTP.BadRequest]: BadRequest;
 		[HTTP.Unauthorized]: Unauthorized;
 	}
->("/auth/sso/exchange");
+>("auth/sso/exchange");
 
 /* ---------------------------------- Self ---------------------------------- */
 
@@ -99,7 +99,7 @@ export const SelfGet = GET<
 		[HTTP.OK]: Response<SelfUser>;
 		[HTTP.Unauthorized]: Unauthorized;
 	}
->("/self");
+>("self");
 
 export const SelfUpdate = PATCH<
 	[],
@@ -111,7 +111,7 @@ export const SelfUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.Conflict]: Response<Error>;
 	}
->("/self");
+>("self");
 
 /* ---------------------------------- User ---------------------------------- */
 export const UserGet = GET<
@@ -121,7 +121,7 @@ export const UserGet = GET<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/user");
+>("user");
 
 /* --------------------------------- Projects -------------------------------- */
 
@@ -132,7 +132,7 @@ export const ProjectGetAll = GET<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.Forbidden]: Forbidden;
 	}
->("/projects");
+>("projects");
 
 export const ProjectCreate = POST<
 	[],
@@ -143,7 +143,7 @@ export const ProjectCreate = POST<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.Forbidden]: Forbidden;
 	}
->("/projects");
+>("projects");
 
 export const ProjectGet = GET<
 	[ProjectUUID],
@@ -153,7 +153,7 @@ export const ProjectGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}");
+>("projects/{projectUUID}");
 
 export const ProjectUpdate = PATCH<
 	[ProjectUUID],
@@ -165,7 +165,7 @@ export const ProjectUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}");
+>("projects/{projectUUID}");
 
 export const ProjectDelete = DELETE<
 	[ProjectUUID],
@@ -175,7 +175,7 @@ export const ProjectDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}");
+>("projects/{projectUUID}");
 
 /* -------------------------------- Statuses -------------------------------- */
 
@@ -187,7 +187,7 @@ export const StatusesGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/statuses");
+>("projects/{projectUUID}/statuses");
 export const StatusesCreate = POST<
 	[ProjectUUID],
 	CreateStatus,
@@ -199,7 +199,7 @@ export const StatusesCreate = POST<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/statuses");
+>("projects/{projectUUID}/statuses");
 export const StatusesGet = GET<
 	[ProjectUUID, StatusID],
 	{
@@ -208,7 +208,7 @@ export const StatusesGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/statuses/{statusID}");
+>("projects/{projectUUID}/statuses/{statusID}");
 export const StatusesUpdate = PATCH<
 	[ProjectUUID, StatusID],
 	UpdateStatus,
@@ -219,7 +219,7 @@ export const StatusesUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/statuses/{statusID}");
+>("projects/{projectUUID}/statuses/{statusID}");
 export const StatusesDelete = DELETE<
 	[ProjectUUID, StatusID],
 	{
@@ -229,7 +229,7 @@ export const StatusesDelete = DELETE<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/statuses/{statusID}");
+>("projects/{projectUUID}/statuses/{statusID}");
 
 /* --------------------------------- Columns -------------------------------- */
 
@@ -241,7 +241,7 @@ export const ColumnGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/columns");
+>("projects/{projectUUID}/columns");
 
 export const ColumnCreate = POST<
 	[ProjectUUID],
@@ -253,7 +253,7 @@ export const ColumnCreate = POST<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/columns");
+>("projects/{projectUUID}/columns");
 
 export const ColumnGet = GET<
 	[ColumnID],
@@ -263,7 +263,7 @@ export const ColumnGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/columns/{columnID}");
+>("columns/{columnID}");
 
 export const ColumnUpdate = PATCH<
 	[ColumnID],
@@ -275,7 +275,7 @@ export const ColumnUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/columns/{columnID}");
+>("columns/{columnID}");
 
 export const ColumnMove = POST<
 	[ColumnID],
@@ -287,7 +287,7 @@ export const ColumnMove = POST<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/columns/{columnID}/move");
+>("columns/{columnID}/move");
 
 export const ColumnDelete = DELETE<
 	[ColumnID],
@@ -297,7 +297,7 @@ export const ColumnDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/columns/{columnID}");
+>("columns/{columnID}");
 
 /* --------------------------------- Members -------------------------------- */
 
@@ -309,7 +309,7 @@ export const MemberGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/members");
+>("projects/{projectUUID}/members");
 
 export const MemberCreate = POST<
 	[ProjectUUID],
@@ -322,7 +322,7 @@ export const MemberCreate = POST<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/members");
+>("projects/{projectUUID}/members");
 
 export const MemberGet = GET<
 	[ProjectUUID, UserUUID],
@@ -332,7 +332,7 @@ export const MemberGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/member");
+>("projects/{projectUUID}/member");
 
 export const MemberUpdate = PATCH<
 	[ProjectUUID, UserUUID],
@@ -344,7 +344,7 @@ export const MemberUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/member");
+>("projects/{projectUUID}/member");
 
 export const MemberDelete = DELETE<
 	[ProjectUUID, UserUUID],
@@ -354,7 +354,7 @@ export const MemberDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/member");
+>("projects/{projectUUID}/member");
 
 /* ---------------------------------- Tasks --------------------------------- */
 
@@ -366,7 +366,7 @@ export const TaskGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tasks");
+>("projects/{projectUUID}/tasks");
 
 export const TaskCreate = POST<
 	[ProjectUUID],
@@ -378,7 +378,7 @@ export const TaskCreate = POST<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tasks");
+>("projects/{projectUUID}/tasks");
 
 export const TaskGet = GET<
 	[ProjectUUID, TaskID],
@@ -388,7 +388,7 @@ export const TaskGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task");
+>("projects/{projectUUID}/task");
 
 export const TaskUpdate = PATCH<
 	[ProjectUUID, TaskID],
@@ -400,7 +400,7 @@ export const TaskUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task");
+>("projects/{projectUUID}/task");
 
 export const TaskMove = POST<
 	[ProjectUUID, TaskID],
@@ -412,7 +412,7 @@ export const TaskMove = POST<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task/move");
+>("projects/{projectUUID}/task/move");
 
 export const TaskDelete = DELETE<
 	[ProjectUUID, TaskID],
@@ -422,7 +422,7 @@ export const TaskDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task");
+>("projects/{projectUUID}/task");
 
 /* ------------------------------- Task Tags -------------------------------- */
 
@@ -434,7 +434,7 @@ export const TaskTagGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task/tags");
+>("projects/{projectUUID}/task/tags");
 
 export const TaskTagCreate = POST<
 	[ProjectUUID, TaskID, TagID],
@@ -446,7 +446,7 @@ export const TaskTagCreate = POST<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task/tags");
+>("projects/{projectUUID}/task/tags");
 
 export const TaskTagDelete = DELETE<
 	[ProjectUUID, TaskID, TagID],
@@ -456,7 +456,7 @@ export const TaskTagDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/task/tags");
+>("projects/{projectUUID}/task/tags");
 
 /* -------------------------------- Assignees ------------------------------- */
 
@@ -468,7 +468,7 @@ export const AssigneeGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/assignees");
+>("projects/{projectUUID}/assignees");
 
 export const AssigneeCreate = POST<
 	[ProjectUUID, TaskID],
@@ -481,7 +481,7 @@ export const AssigneeCreate = POST<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/assignees");
+>("projects/{projectUUID}/assignees");
 
 export const AssigneeDelete = DELETE<
 	[ProjectUUID, TaskID, UserUUID],
@@ -491,7 +491,7 @@ export const AssigneeDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/assignee");
+>("projects/{projectUUID}/assignee");
 
 /* ----------------------------- Project Tags ------------------------------ */
 
@@ -503,7 +503,7 @@ export const TagGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tag");
+>("projects/{projectUUID}/tag");
 
 export const TagCreate = POST<
 	[ProjectUUID],
@@ -515,7 +515,7 @@ export const TagCreate = POST<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tag");
+>("projects/{projectUUID}/tag");
 
 export const TagUpdate = PATCH<
 	[ProjectUUID, TagID],
@@ -527,7 +527,7 @@ export const TagUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tag");
+>("projects/{projectUUID}/tag");
 
 export const TagDelete = DELETE<
 	[ProjectUUID, TagID],
@@ -537,7 +537,7 @@ export const TagDelete = DELETE<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/tag");
+>("projects/{projectUUID}/tag");
 
 /* ---------------------------------- Roles --------------------------------- */
 
@@ -548,7 +548,7 @@ export const RoleGetAll = GET<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.Forbidden]: Forbidden;
 	}
->("/projects/{projectUUID}/roles");
+>("projects/{projectUUID}/roles");
 
 export const RoleCreate = POST<
 	[ProjectUUID],
@@ -559,7 +559,7 @@ export const RoleCreate = POST<
 		[HTTP.Unauthorized]: Unauthorized;
 		[HTTP.Forbidden]: Forbidden;
 	}
->("/projects/{projectUUID}/roles");
+>("projects/{projectUUID}/roles");
 
 export const RoleGet = GET<
 	[ProjectUUID, RoleID],
@@ -569,7 +569,7 @@ export const RoleGet = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/roles/{roleID}");
+>("projects/{projectUUID}/roles/{roleID}");
 
 export const RoleUpdate = PATCH<
 	[ProjectUUID, RoleID],
@@ -581,7 +581,7 @@ export const RoleUpdate = PATCH<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/roles/{roleID}");
+>("projects/{projectUUID}/roles/{roleID}");
 
 export const RoleDelete = DELETE<
 	[ProjectUUID, RoleID],
@@ -592,7 +592,7 @@ export const RoleDelete = DELETE<
 		[HTTP.NotFound]: EmptyResponse;
 		[HTTP.Conflict]: EmptyResponse;
 	}
->("/projects/{projectUUID}/roles/{roleID}");
+>("projects/{projectUUID}/roles/{roleID}");
 
 export const RolePermissionGetAll = GET<
 	[ProjectUUID, RoleID],
@@ -602,7 +602,7 @@ export const RolePermissionGetAll = GET<
 		[HTTP.Forbidden]: Forbidden;
 		[HTTP.NotFound]: EmptyResponse;
 	}
->("/projects/{projectUUID}/roles/{roleID}/permissions");
+>("projects/{projectUUID}/roles/{roleID}/permissions");
 
 export const PermissionsGetAll = GET<
 	[],
@@ -610,4 +610,4 @@ export const PermissionsGetAll = GET<
 		[HTTP.OK]: Response<Permission[]>;
 		[HTTP.Unauthorized]: Unauthorized;
 	}
->("/projects/permissions");
+>("projects/permissions");
