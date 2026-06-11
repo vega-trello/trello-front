@@ -1,12 +1,30 @@
-import { Box, Button, Flex, For, IconButton, Text } from "@chakra-ui/react";
+import {
+	Box,
+	Button,
+	Flex,
+	For,
+	IconButton,
+	List,
+	Text,
+	VStack,
+} from "@chakra-ui/react";
 import type { Role, UUID } from "../shared/api/openapi/components/schemas";
-import { createAlertDialog, errorMessage, toaster, useTitle } from "../shared";
+import {
+	createAlertDialog,
+	errorMessage,
+	roleNameToDisplayName,
+	toaster,
+	Tooltip,
+	useTitle,
+} from "../shared";
 import { Loader } from "./loader";
 import { ErrorAlert } from "./error-alert";
 import { useCreateRole, useDeleteRole, useRoles } from "../entities/role";
 import { useCallback } from "react";
 import { HiOutlinePencilAlt, HiOutlineTrash } from "react-icons/hi";
 import { editRoleDialog } from "../entities/role/ui/edit-role-dialog";
+import { useRolePermissions } from "../entities/role/model/use-role";
+import { LuCircleCheck } from "react-icons/lu";
 
 const deleteDialog = createAlertDialog({
 	title: "Вы уверены?",
@@ -19,6 +37,7 @@ type RoleElementProps = {
 };
 function RoleElement({ projectUUID, role }: RoleElementProps) {
 	const deleteRole = useDeleteRole();
+	const { data: perms } = useRolePermissions(projectUUID, role.id);
 	const handleDelete = useCallback(() => {
 		deleteRole.mutate(
 			{
@@ -33,14 +52,37 @@ function RoleElement({ projectUUID, role }: RoleElementProps) {
 
 	return (
 		<Box display="flex" alignItems="center" justifyContent="space-between">
-			<Flex flexDirection="column" gap={0} flex={1} as="label">
-				<Text>{role.name}</Text>
-				{role.description && (
-					<Text fontSize="xs" color="gray.500">
-						{role.description}
-					</Text>
-				)}
-			</Flex>
+			<Tooltip
+				content={
+					<VStack>
+						<Text>Разрешения</Text>
+						{perms && perms.length !== 0 && (
+							<List.Root variant="plain">
+								<For each={perms}>
+									{(perm) => (
+										<List.Item>
+											<List.Indicator asChild>
+												<LuCircleCheck/>
+											</List.Indicator>
+											{roleNameToDisplayName(perm.name)}
+										</List.Item>
+									)}
+								</For>
+							</List.Root>
+						)}
+						{perms && perms.length === 0 && <Text>Нет разрешений</Text>}
+					</VStack>
+				}
+			>
+				<Flex flexDirection="column" gap={0} flex={1} as="label">
+					<Text>{role.name}</Text>
+					{role.description && (
+						<Text fontSize="xs" color="gray.500">
+							{role.description}
+						</Text>
+					)}
+				</Flex>
+			</Tooltip>
 			{role.project_uuid !== null && (
 				<Box>
 					<IconButton

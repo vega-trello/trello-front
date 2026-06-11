@@ -465,8 +465,8 @@ export const Adapter: APIAdapter = {
 						resolve({
 							status: HTTP.Conflict,
 							body: {
-								error: "Пользователь уже существует",
-								message: "Выберите другое имя пользователя",
+								error: "Логин занят",
+								message: "Пользователь с таким логином уже существует",
 							},
 						});
 						return { db };

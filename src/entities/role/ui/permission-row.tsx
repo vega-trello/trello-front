@@ -1,19 +1,13 @@
 import { Flex, Switch, Text } from "@chakra-ui/react";
 import type { integer } from "../../../shared/api/openapi/components/schemas/integer";
 import type { Permission } from "../../../shared/api/openapi/components/schemas";
+import { roleNameToDisplayName } from "../../../shared";
 
 type PermissionRowProps = {
 	permission: Permission;
 	checked: boolean;
 	onToggle: (id: integer) => void;
 };
-
-function toDisplayName(str: string): string {
-	return str
-		.split("_")
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(" ");
-}
 
 export function PermissionRow({
 	permission,
@@ -37,7 +31,7 @@ export function PermissionRow({
 					flexGrow={1}
 				>
 					<Text fontSize="sm" fontWeight={500}>
-						{toDisplayName(permission.name)}
+						{roleNameToDisplayName(permission.name)}
 					</Text>
 					{permission.description && (
 						<Text fontSize="xs" color="gray.500">

@@ -13,3 +13,4 @@ export { errorMessage } from "./model/error-message";
 export { useTitle } from "./model/use-title";
 export { createAlertDialog } from "./ui/alert-dialog";
 export { randomHexColor } from "./model/random-color";
+export { roleNameToDisplayName } from "./model/to-display-name";

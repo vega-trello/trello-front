@@ -5,12 +5,16 @@ import { useExchange } from "../../../entities/user/model/use-auth-mutations";
 import { errorMessage, toaster } from "../../../shared";
 
 async function fetchSessionToken(): Promise<string | null> {
-	const res = await fetch(
-		"https://vegastage.ru/authservice.php?op=getsessiontoken",
-		{ credentials: "include" },
-	);
-	const data = await res.json();
-	return data.token ?? null;
+	try {
+		const res = await fetch(
+			"https://vegastage.ru/authservice.php?op=getsessiontoken",
+			{ credentials: "include" },
+		);
+		const data = await res.json();
+		return data.token ?? null;
+	} catch {
+		return null;
+	}
 }
 
 export function SSOButton() {

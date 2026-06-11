@@ -41,9 +41,9 @@ function UpdateDialog({
 					title: "Успешно",
 					description:
 						"username" in update && "password" in update
-							? "Имя и пароль изменены"
+							? "Логин и пароль изменены"
 							: "username" in update
-								? "Имя изменено"
+								? "Логин изменено"
 								: "password" in update
 									? "Пароль изменён"
 									: undefined,
@@ -67,12 +67,12 @@ function UpdateDialog({
 				<Dialog.Positioner>
 					<Dialog.Content>
 						<Dialog.Header>
-							<Dialog.Title>Изменить пользователя</Dialog.Title>
+							<Dialog.Title>Изменить параметры пользователя</Dialog.Title>
 						</Dialog.Header>
 						<Dialog.Body>
 							<Stack gap="4">
 								<Field.Root>
-									<Field.Label>Имя</Field.Label>
+									<Field.Label>Логин</Field.Label>
 									<Input
 										placeholder="Оставтье пустым чтобы не изменять"
 										value={username}
@@ -129,7 +129,7 @@ export function Page() {
 					</Flex>
 				</Field.Root>
 				<Field.Root>
-					<Field.Label>Имя пользователя</Field.Label>
+					<Field.Label>Логин</Field.Label>
 					<Text>{user.username}</Text>
 				</Field.Root>
 				<Field.Root>

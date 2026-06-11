@@ -43,7 +43,7 @@ export function Login() {
 						}}
 					>
 						<Field.Root>
-							<Field.Label>Имя пользователя</Field.Label>
+							<Field.Label>Логин</Field.Label>
 							<Input
 								placeholder="username"
 								type="text"

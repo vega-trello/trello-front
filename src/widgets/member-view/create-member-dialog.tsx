@@ -74,7 +74,11 @@ export function CreateMemberDialog({
 						</Dialog.Header>
 						<Dialog.Body>
 							<HStack>
-								<Input value={uuid} onChange={(e) => setUUID(e.target.value)} />
+								<Input
+									value={uuid}
+									onChange={(e) => setUUID(e.target.value)}
+									placeholder="UUID пользователя"
+								/>
 								<Select.Root
 									collection={collection}
 									value={role !== undefined ? [role] : []}
