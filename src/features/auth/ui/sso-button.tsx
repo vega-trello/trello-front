@@ -4,11 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useExchange } from "../../../entities/user/model/use-auth-mutations";
 import { errorMessage, toaster } from "../../../shared";
 
-async function fetchSessionToken(): Promise<string | null> {
+async function fetchSessionToken({
+	signal,
+}: {
+	signal: AbortSignal;
+}): Promise<string | null> {
 	try {
 		const res = await fetch(
 			"https://vegastage.ru/authservice.php?op=getsessiontoken",
-			{ credentials: "include" },
+			{ credentials: "include", signal },
 		);
 		const data = await res.json();
 		return data.token ?? null;
@@ -16,6 +20,13 @@ async function fetchSessionToken(): Promise<string | null> {
 		return null;
 	}
 }
+
+const createVegaPopup = () =>
+	window.open(
+		"https://vegastage.ru/auth_session/login.php",
+		"sso-login",
+		"width=500,height=600,menubar=no,toolbar=no,location=no",
+	);
 
 export function SSOButton() {
 	const [polling, setPolling] = useState(false);
@@ -25,9 +36,7 @@ export function SSOButton() {
 	const handleExchange = useCallback(
 		(token: string) => {
 			exchange.mutate(
-				{
-					token,
-				},
+				{ token },
 				{
 					onError: (err) => toaster.error(errorMessage(err)),
 				},
@@ -60,11 +69,7 @@ export function SSOButton() {
 	}, [token, isSuccess, handleExchange]);
 
 	const handleAuth = useCallback(async () => {
-		popupRef.current = window.open(
-			"https://vegastage.ru/auth_session/login.php",
-			"sso-login",
-			"width=500,height=600,menubar=no,toolbar=no,location=no",
-		);
+		popupRef.current = createVegaPopup();
 		setPolling(true);
 	}, []);
 
